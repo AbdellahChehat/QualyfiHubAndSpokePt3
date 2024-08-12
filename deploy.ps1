@@ -13,14 +13,16 @@ function SecureString{
     
 } 
 #Parameters Decleration
-$RGName = (Get-AzResourceGroup).ResourceGroupName
-$RGLocation = (Get-AzResourceGroup).Location
+$RGName = "rg-hubandspoke-prod-01" #(Get-AzResourceGroup).ResourceGroupName
+$RGLocation = "uksouth" #(Get-AzResourceGroup).Location
 $CoreTags = @{"Area"="CoreServices"}
 $CoreSecretsKeyVaultName = "kv-secret-core-" + (RandomiseString 6)
 $CoreEncryptKeyVaultName = "kv-encrypt-core-" + (RandomiseString 6)
 $RecoveryServiceVaultName = 'rsv-core-'+$RGLocation+'-001'
 $vmName = 'vm-core-'+$RGLocation+'-001'
 
+#Create RG
+New-AzResourceGroup -Name $RGName -Location $RGLocation
 
 #Key Vault Properties|	
 $VMAdminUsernameP = RandomiseString 

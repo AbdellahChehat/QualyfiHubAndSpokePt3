@@ -66,6 +66,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
 }
 
 //Bastion Code
+/*
 resource BastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: AzureBastionSubnetName,parent: virtualNetwork}
 
 resource bastionPIP 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
@@ -99,6 +100,7 @@ resource bastion 'Microsoft.Network/bastionHosts@2023-05-01' = {
     ]
   }
 }
+*/
 //Firewall Code
 resource FirewallSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: AzureFirewallSubnetName,parent: virtualNetwork}
 
