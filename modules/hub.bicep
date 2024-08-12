@@ -1,6 +1,6 @@
 
 
-param RGLocation string
+param location string
 param vnetAddressPrefix string
 param GatewaySubnetName string
 param AppgwSubnetName string
@@ -12,23 +12,23 @@ param logAnalyticsWorkspaceName string
 param hubTag object
 
 
-var virtualNetworkName = 'vnet-hub-${RGLocation}-001'
+var virtualNetworkName = 'vnet-hub-${location}-001'
 var GatewaySubnetAddressPrefix ='1'
 var AppgwSubnetAddressPrefix ='2'
 var AzureFirewallSubnetAddressPrefix ='3'
 var AzureBastionSubnetAddressPrefix ='4'
-var appgw_id = resourceId('Microsoft.Network/applicationGateways','appGateway-hub-${RGLocation}-001')
-var bastionPIPName ='pip-bastion-hub-${RGLocation}-001'
-var bastionName ='bastion-hub-${RGLocation}-001'
-var firewallPIPName = 'pip-firewall-hub-${RGLocation}-001'
-var firewallPolicyName ='firewallPolicy-hub-${RGLocation}-001' 
-var firewallRulesName ='firewallRules-hub-${RGLocation}-001'
-var appGatewayPIPName = 'pip-appGateway-hub-${RGLocation}-001'
-var appGatewayName = 'appGateway-hub-${RGLocation}-001'
+var appgw_id = resourceId('Microsoft.Network/applicationGateways','appGateway-hub-${location}-001')
+var bastionPIPName ='pip-bastion-hub-${location}-001'
+var bastionName ='bastion-hub-${location}-001'
+var firewallPIPName = 'pip-firewall-hub-${location}-001'
+var firewallPolicyName ='firewallPolicy-hub-${location}-001' 
+var firewallRulesName ='firewallRules-hub-${location}-001'
+var appGatewayPIPName = 'pip-appGateway-hub-${location}-001'
+var appGatewayName = 'appGateway-hub-${location}-001'
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   name: virtualNetworkName
-  location: RGLocation
+  location: location
   tags:hubTag
   properties: {
     addressSpace: {
@@ -71,7 +71,7 @@ resource BastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' ex
 
 resource bastionPIP 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
   name: bastionPIPName
-  location: RGLocation
+  location: location
   tags:hubTag
   sku: {
     name: 'Standard'
@@ -82,7 +82,7 @@ resource bastionPIP 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
 }
 resource bastion 'Microsoft.Network/bastionHosts@2023-05-01' = {
   name: bastionName
-  location:RGLocation
+  location:location
   tags:hubTag
   properties: {
     ipConfigurations: [
@@ -106,7 +106,7 @@ resource FirewallSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' e
 
 resource firewallPIP 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
   name: firewallPIPName
-  location: RGLocation
+  location: location
   tags:hubTag
   sku: {
     name: 'Standard'
@@ -118,7 +118,7 @@ resource firewallPIP 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
 
 resource firewall 'Microsoft.Network/azureFirewalls@2023-05-01' ={
   name: firewallName
-  location:RGLocation
+  location:location
   tags:hubTag
   properties:{
     hubIPAddresses:{
@@ -138,7 +138,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2023-05-01' ={
 resource firewallPolicy 'Microsoft.Network/firewallPolicies@2021-05-01' = {
   name: firewallPolicyName
   tags:hubTag
-  location: RGLocation
+  location: location
 }
 resource firewallRuleCollection 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2023-05-01' ={
   name: firewallRulesName
@@ -193,7 +193,7 @@ resource AppGatewaySubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01'
 
 resource appGatewayPIP 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
   name: appGatewayPIPName
-  location: RGLocation
+  location: location
   tags:hubTag
   sku: {
     name: 'Standard'
@@ -205,7 +205,7 @@ resource appGatewayPIP 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
 
 resource appGateway 'Microsoft.Network/applicationGateways@2023-05-01' = {
   name: appGatewayName
-  location: RGLocation
+  location: location
   tags:hubTag
   properties:{
     backendAddressPools:[

@@ -1,6 +1,6 @@
 
 
-param RGLocation string
+param location string
 param vnetAddressPrefix string
 @secure()
 param adminUsername string
@@ -15,8 +15,8 @@ param CoreEncryptKeyVaultName string
 param RecoverySAName string
 param coreTag object
 
-var virtualNetworkName = 'vnet-core-${RGLocation}-001'
-var vmName ='vm-core-${RGLocation}-001'
+var virtualNetworkName = 'vnet-core-${location}-001'
+var vmName ='vm-core-${location}-001'
 var backupFabric = 'Azure'
 var v2VmType = 'Microsoft.Compute/virtualMachines'
 var v2VmContainer = 'iaasvmcontainer;iaasvmcontainerv2;'
@@ -24,7 +24,7 @@ var v2Vm = 'vm;iaasvmcontainerv2;'
 var vmSubetName = 'VMSubnet'
 var kvSubetName = 'KVSubnet'
 var vmSize = 'Standard_D2S_v3'
-var vmNICName = 'nic-core-${RGLocation}-001'
+var vmNICName = 'nic-core-${location}-001'
 var vmNICIP = '10.20.1.20'
 var vmComputerName = 'coreComputer'
 var dataCollectionRuleName = 'MSVMI-vmDataCollectionRule'
@@ -35,7 +35,7 @@ resource defaultNSG 'Microsoft.Network/networkSecurityGroups@2023-05-01' existin
 resource routeTable 'Microsoft.Network/routeTables@2019-11-01' existing = {name: routeTableName}
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   name: virtualNetworkName
-  location: RGLocation
+  location: location
   tags:coreTag
   properties: {
     addressSpace: {
@@ -66,7 +66,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
 resource VMSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: vmSubetName,parent: virtualNetwork}
 resource VMNetworkInterface 'Microsoft.Network/networkInterfaces@2020-11-01' = {
   name: vmNICName
-  location: RGLocation
+  location: location
   tags:coreTag
   properties: {
     ipConfigurations: [
@@ -85,7 +85,7 @@ resource VMNetworkInterface 'Microsoft.Network/networkInterfaces@2020-11-01' = {
 }
 resource windowsVM 'Microsoft.Compute/virtualMachines@2020-12-01' = {
   name: vmName
-  location: RGLocation
+  location: location
   tags:coreTag
   properties: {
     hardwareProfile: {
@@ -138,7 +138,7 @@ resource vmDAExtension 'Microsoft.Compute/virtualMachines/extensions@2023-07-01'
   parent:windowsVM
   name:'vmDependancyAgent'
   tags:coreTag
-  location:RGLocation
+  location:location
   properties:{
     publisher: 'Microsoft.Azure.Monitoring.DependencyAgent'
     type:'DependencyAgentWindows'
@@ -153,7 +153,7 @@ resource vmAMAExtension 'Microsoft.Compute/virtualMachines/extensions@2023-07-01
   parent:windowsVM
   name:'AzureMonitorWindowsAgent'
   tags:coreTag
-  location:RGLocation
+  location:location
   properties:{
     publisher: 'Microsoft.Azure.Monitor'
     type:'AzureMonitorWindowsAgent'
@@ -169,7 +169,7 @@ resource windowsVMGuestConfigExtension 'Microsoft.Compute/virtualMachines/extens
   parent: windowsVM
   name: 'AzurePolicyforWindows'
   tags:coreTag
-  location: RGLocation
+  location: location
   properties: {
     publisher: 'Microsoft.GuestConfiguration'
     type: 'ConfigurationforWindows'
@@ -184,7 +184,7 @@ resource vmAntiMalwareExtension 'Microsoft.Compute/virtualMachines/extensions@20
   parent:windowsVM
   name:'AntiMalwareAgent'
   tags:coreTag
-  location:RGLocation
+  location:location
   properties:{
     publisher: 'Microsoft.Azure.Security'
     type:'IaaSAntimalware'
@@ -198,7 +198,7 @@ resource vmAntiMalwareExtension 'Microsoft.Compute/virtualMachines/extensions@20
 }
 resource dataCollectionRule 'Microsoft.Insights/dataCollectionRules@2022-06-01' = {
   name: dataCollectionRuleName
-  location: RGLocation
+  location: location
   tags:coreTag
   identity:{
     type:'None'
@@ -262,7 +262,7 @@ resource dataCollectionRuleAssociation 'Microsoft.Insights/dataCollectionRuleAss
   }
 }
 resource solution 'Microsoft.OperationsManagement/solutions@2015-11-01-preview' = {
-  location: RGLocation
+  location: location
   tags:coreTag
   name: 'VMInsights(${split(logAnalyticsWorkspace.id, '/')[8]})'
   properties: {
@@ -293,7 +293,7 @@ resource windowsVMBackup 'Microsoft.RecoveryServices/vaults/backupFabrics/protec
 resource encryptionKeyVault 'Microsoft.KeyVault/vaults@2023-02-01'={
   name:CoreEncryptKeyVaultName
   tags:coreTag
-  location:RGLocation
+  location:location
   properties:{
     accessPolicies:[]
     enableRbacAuthorization: false
@@ -316,7 +316,7 @@ resource DiskEncryption 'Microsoft.Compute/virtualMachines/extensions@2023-07-01
   parent: windowsVM
   tags:coreTag
   name: 'AzureDiskEncryption'
-  location: RGLocation
+  location: location
   properties: {
     publisher: 'Microsoft.Azure.Security'
     type: 'AzureDiskEncryption'
@@ -353,7 +353,7 @@ resource privateEndpointDnsZoneGroup 'Microsoft.Network/privateEndpoints/private
 }
 resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
   name:'private-endpoint-${encryptionKeyVault.name}'
-  location:RGLocation
+  location:location
   tags:coreTag
   properties:{
     subnet:{
@@ -376,7 +376,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: RecoverySAName
   tags:coreTag
   kind: 'StorageV2'
-  location: RGLocation
+  location: location
   sku:{
     name:'Standard_LRS'
   }

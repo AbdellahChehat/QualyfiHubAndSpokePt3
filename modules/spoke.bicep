@@ -3,7 +3,7 @@
   'prod'
 ])
 param devOrProd string = 'dev'
-param RGLocation string
+param location string
 param vnetAddressPrefix string
 param randString string
 @secure()
@@ -20,12 +20,12 @@ param appServiceName string
 param logAnalyticsWorkspaceName string
 param tagSpoke object
 
-var virtualNetworkName = 'vnet-${devOrProd}-${RGLocation}-001'
+var virtualNetworkName = 'vnet-${devOrProd}-${location}-001'
 var appServicePlanSku = 'B1'
 var appServiceSubnetName ='AppSubnet'
-var SQLServerName = 'sql-${devOrProd}-${RGLocation}-001-${randString}'
+var SQLServerName = 'sql-${devOrProd}-${location}-001-${randString}'
 var SQLServerSku = 'Basic'
-var SQLDatabaseName = 'sqldb-${devOrProd}-${RGLocation}-001-${randString}'
+var SQLDatabaseName = 'sqldb-${devOrProd}-${location}-001-${randString}'
 var SQLServerSubnetName ='SqlSubnet'
 var storageAccountName = 'st${devOrProd}001${randString}'
 var SASubnetName ='StSubnet'
@@ -41,7 +41,7 @@ resource defaultNSG 'Microsoft.Network/networkSecurityGroups@2023-05-01' existin
 }
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   name: virtualNetworkName
-  location: RGLocation
+  location: location
   tags:tagSpoke
   properties: {
     addressSpace: {
@@ -83,7 +83,7 @@ resource storageAccountSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-03
 }
 resource appServicePlan 'Microsoft.Web/serverfarms@2022-09-01'={
   name: appServicePlanName
-  location:RGLocation
+  location:location
   tags:tagSpoke
   kind: 'linux'
   sku:{
@@ -96,7 +96,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2022-09-01'={
 }
 resource appService 'Microsoft.Web/sites@2022-09-01' ={
   name:appServiceName
-  location:RGLocation
+  location:location
   tags:tagSpoke
   properties:{
     serverFarmId:appServicePlan.id
@@ -137,7 +137,7 @@ resource AppServiceSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01'
 }
 resource appServicePrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' ={
   name:appServicePrivateEndpointName
-  location:RGLocation
+  location:location
   tags:tagSpoke
   properties:{
     subnet:{
@@ -156,7 +156,7 @@ resource appServicePrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-0
   }
 }
 resource appServiceDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (devOrProd == 'prod') {
-  name: '${devOrProd}-${RGLocation}-aSDiagnosticSettings'
+  name: '${devOrProd}-${location}-aSDiagnosticSettings'
   scope: appService
   properties: {
     logs: [
@@ -179,8 +179,8 @@ resource appServiceDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@202
   ]
 }
 resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name:'${devOrProd}-${RGLocation}-aSInsights'
-  location:RGLocation
+  name:'${devOrProd}-${location}-aSInsights'
+  location:location
   tags:tagSpoke
   kind:'web'
   properties: {
@@ -191,7 +191,7 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
 //SQL
 resource sqlServer 'Microsoft.Sql/servers@2021-11-01' = {
   name:SQLServerName
-  location:RGLocation
+  location:location
   tags:tagSpoke
   properties:{
     administratorLogin:adminUsername
@@ -200,7 +200,7 @@ resource sqlServer 'Microsoft.Sql/servers@2021-11-01' = {
 }
 resource sqlDB 'Microsoft.Sql/servers/databases@2021-11-01' = {
   name:SQLDatabaseName
-  location:RGLocation
+  location:location
   tags:tagSpoke
   parent: sqlServer
   sku:{
@@ -212,7 +212,7 @@ resource SQLSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existi
 }
 resource sqlServerPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' ={
   name:sqlServerPrivateEndpointName
-  location:RGLocation
+  location:location
   tags:tagSpoke
   properties:{
     subnet:{
@@ -235,14 +235,14 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = if (dev
   name: storageAccountName
   kind: 'StorageV2'
   tags:tagSpoke
-  location: RGLocation
+  location: location
   sku:{
     name:'Standard_LRS'
   }
 }
 resource storageAccountPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = if (devOrProd == 'prod') {
   name:storageAccountPrivateEndpointName
-  location:RGLocation
+  location:location
   tags:tagSpoke
   properties:{
     subnet:{

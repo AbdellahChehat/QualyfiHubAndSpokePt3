@@ -4,7 +4,7 @@ param hubVnetName string
 param prodVnetName string
 param logAnalyticsWorkspaceName string
 param recoveryServiceVaultName string
-param RGLocation string
+param location string
 param coreVnetAddress string
 param devVnetAddress string
 param prodVnetAddress string
@@ -19,7 +19,7 @@ param coreServicesTag object
 //RSV
 resource recoveryServiceVaults 'Microsoft.RecoveryServices/vaults@2023-06-01'={
   name:recoveryServiceVaultName
-  location:RGLocation
+  location:location
   tags:coreServicesTag
   properties:{
     publicNetworkAccess:'Disabled'
@@ -32,7 +32,7 @@ resource recoveryServiceVaults 'Microsoft.RecoveryServices/vaults@2023-06-01'={
 //LAW
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   name:logAnalyticsWorkspaceName
-  location:RGLocation
+  location:location
   tags:coreServicesTag
   properties:{
     features:{
@@ -43,7 +43,7 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10
 //Get VNets
 resource coreVnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   name: coreVnetName
-  location: RGLocation
+  location: location
   tags:coreTag
   properties: {
     addressSpace: {
@@ -55,7 +55,7 @@ resource coreVnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
 }
 resource devVnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   name: devVnetName
-  location: RGLocation
+  location: location
   tags:devTag
   properties: {
     addressSpace: {
@@ -67,7 +67,7 @@ resource devVnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
 }
 resource hubVnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   name: hubVnetName
-  location: RGLocation
+  location: location
   tags:hubTag
   properties: {
     addressSpace: {
@@ -79,7 +79,7 @@ resource hubVnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
 }
 resource prodVnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   name: prodVnetName
-  location: RGLocation
+  location: location
   tags:prodTag
   properties: {
     addressSpace: {

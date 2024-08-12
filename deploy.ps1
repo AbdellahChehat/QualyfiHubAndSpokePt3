@@ -22,6 +22,7 @@ $RecoveryServiceVaultName = 'rsv-core-'+$RGLocation+'-001'
 $vmName = 'vm-core-'+$RGLocation+'-001'
 
 #Create RG
+Connect-AzAccount -TenantId d4003661-f87e-4237-9a9b-8b9c31ba2467
 New-AzResourceGroup -Name $RGName -Location $RGLocation
 
 #Key Vault Properties|	
@@ -35,7 +36,7 @@ Write-Output "SQL Admin Password : $SQLAdminUsernameP"
 Write-Output "SQL Admin Password : $SQLAdminPasswordP"
 Write-Output "CoreSecretsKeyVaultName : $CoreSecretsKeyVaultName"
 
-#Connect Connect-AzAccount
+
 #Deploy Keyvault
 New-AzKeyVault -ResourceGroupName $RGName -Location $RGLocation -Name $CoreSecretsKeyVaultName -EnabledForTemplateDeployment -Tag $CoreTags
 #Set Secrets
@@ -44,9 +45,8 @@ Set-AzKeyVaultSecret -VaultName $CoreSecretsKeyVaultName -Name "VMAdminPassword"
 Set-AzKeyVaultSecret -VaultName $CoreSecretsKeyVaultName -Name "SQLAdminUsername" -SecretValue (SecureString $SQLAdminUsernameP)
 Set-AzKeyVaultSecret -VaultName $CoreSecretsKeyVaultName -Name "SQLAdminPassword" -SecretValue (SecureString $SQLAdminPasswordP)
 
-
-New-AzResourceGroupDeployment -ResourceGroupName $RGName -TemplateFile main.bicep `
--RGLocation $RGLocation -CoreSecVaultName $CoreSecretsKeyVaultName -CoreEncryptKeyVaultName $CoreEncryptKeyVaultName -RandString (RandomiseString 6 "abcdefghijklmnopqrstuvwxyz1234567890") 
+#Deploy file
+New-AzResourceGroupDeployment -ResourceGroupName $RGName -TemplateFile main.bicep -TemplateParameterFile parameters.bicepparam -RandString (RandomiseString 6 "abcdefghijklmnopqrstuvwxyz1234567890") 
 #Set backup access policy
 Write-Output "Press Enter when All Resources are deployed"
 Pause

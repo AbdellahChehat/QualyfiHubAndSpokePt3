@@ -1,11 +1,11 @@
 
-param RGLocation string
+param location string
 param hubTag object
 param firewallPrivateIP string
-var devVirtualNetworkName = 'vnet-dev-${RGLocation}-001'
-var prodVirtualNetworkName = 'vnet-prod-${RGLocation}-001'
-var hubVirtualNetworkName = 'vnet-hub-${RGLocation}-001'
-var coreVirtualNetworkName = 'vnet-core-${RGLocation}-001'
+var devVirtualNetworkName = 'vnet-dev-${location}-001'
+var prodVirtualNetworkName = 'vnet-prod-${location}-001'
+var hubVirtualNetworkName = 'vnet-hub-${location}-001'
+var coreVirtualNetworkName = 'vnet-core-${location}-001'
 
 resource hubVirtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' existing = {
   name: hubVirtualNetworkName
@@ -106,8 +106,8 @@ resource devToHubPeering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerin
 //user defined routes
 
 resource routeTable 'Microsoft.Network/routeTables@2019-11-01' = {
-  name: 'routetable-${RGLocation}-001'
-  location: RGLocation
+  name: 'routetable-${location}-001'
+  location: location
   tags:hubTag
   properties: {
     routes: [
