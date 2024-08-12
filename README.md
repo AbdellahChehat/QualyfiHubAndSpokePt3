@@ -1,4 +1,4 @@
-# QualyfiHubAndSpoke
+# QualyfiHubAndSpokePt3
 Welcome to my project.
 In this project I have created a hub and spoke landing zone with multiple spokes.
 
@@ -41,3 +41,9 @@ Success Criteria:
 - [x] 12. Resolve the private DNS names from the VM to the private endpoints internal IP addresses - in the VM use the DOS command nslookup to lookup the private DNS
 
 
+Extra Success Criteria:
+- [x] 1. Clone the exercise 1 code to new repo
+- [ ] 2. Remark out the slow resources
+- [ ] 3. Create Github Action to deploy code using Deployment Stack with linting, preflight, what-if, approval
+- [ ] 4. Remove a spoke from the code – and see it deployed and spoke removed from environment
+- [ ] 5. Add the spoke back to the code – and see it deployed and spoke readded
