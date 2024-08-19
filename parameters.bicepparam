@@ -1,7 +1,7 @@
 using 'main.bicep'
 
 param location = 'uksouth' // This value must be provided.
-param RandString = 'jash'
+param RandString = 'z32q5l'
 
 //Subnet names
 param GatewaySubnetName ='GatewaySubnet'
@@ -40,3 +40,5 @@ param coreTag ={ Dept:'Core', Owner:'CoreOwner'}
 param prodTag ={ Dept:'Prod', Owner:'ProdOwner'}
 param devTag ={ Dept:'Dev', Owner:'DevOwner'}
 param coreServicesTag ={ Dept:'CoreServices', Owner:'CoreServicesOwner'}
+
+

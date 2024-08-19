@@ -38,8 +38,8 @@ param prodTag object
 param devTag object
 param coreServicesTag object
 
-var CoreSecVaultName = 'kv-secret-core-${RandString}-001'
-var CoreEncryptKeyVaultName = 'kv-encrypt-core-${RandString}-001'
+var CoreSecVaultName = 'kv-secret-core-${RandString}'
+var CoreEncryptKeyVaultName = 'kv-encrypt-core-${RandString}'
 
 
 

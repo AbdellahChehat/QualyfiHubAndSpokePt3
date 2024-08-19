@@ -12,17 +12,30 @@ function SecureString{
     return (ConvertTo-SecureString $unsecuredString -AsPlainText -Force)
     
 } 
+
 #Parameters Decleration
-$RGName = "rg-hubandspoke-prod-01" #(Get-AzResourceGroup).ResourceGroupName
-$RGLocation = "uksouth" #(Get-AzResourceGroup).Location
+$RGName = "rg-hubandspoke-prod-01" 
+$RGLocation = "uksouth" 
+$RandomString = (RandomiseString 6 "abcdefghijklmnopqrstuvwxyz1234567890") 
 $CoreTags = @{"Area"="CoreServices"}
-$CoreSecretsKeyVaultName = "kv-secret-core-" + (RandomiseString 6)
-$CoreEncryptKeyVaultName = "kv-encrypt-core-" + (RandomiseString 6)
+$CoreSecretsKeyVaultName = "kv-secret-core-" + $RandomString
+$CoreEncryptKeyVaultName = "kv-encrypt-core-" + $RandomString
 $RecoveryServiceVaultName = 'rsv-core-'+$RGLocation+'-001'
 $vmName = 'vm-core-'+$RGLocation+'-001'
 
-#Create RG
-Connect-AzAccount -TenantId d4003661-f87e-4237-9a9b-8b9c31ba2467
+# Adds the new random generated value to the biceparam
+$bicepParamFilePath = 'parameters.bicepparam'
+$bicepParamContent = Get-Content -Raw -Path $bicepParamFilePath
+$bicepParamContent = $bicepParamContent -replace "(param RandString\s*=\s*)'.*?'", "`$1'$RandomString'"
+Set-Content -Path $bicepParamFilePath -Value $bicepParamContent
+
+# Attempt to get the currently logged in Azure account
+$account = Get-AzContext -ErrorAction SilentlyContinue
+if ($null -eq $account) { # No Azure account is logged in
+    Write-Output "No Azure account is currently logged in. Logging in now..."
+    Connect-AzAccount -TenantId d4003661-f87e-4237-9a9b-8b9c31ba2467
+} else { Write-Output "You are already logged in."} # An Azure account is already logged in
+
 New-AzResourceGroup -Name $RGName -Location $RGLocation
 
 #Key Vault Properties|	
@@ -37,33 +50,34 @@ Write-Output "SQL Admin Password : $SQLAdminPasswordP"
 Write-Output "CoreSecretsKeyVaultName : $CoreSecretsKeyVaultName"
 
 
-#Deploy Keyvault
+#Deploy Keyvault and Set Secrets
 New-AzKeyVault -ResourceGroupName $RGName -Location $RGLocation -Name $CoreSecretsKeyVaultName -EnabledForTemplateDeployment -Tag $CoreTags
-#Set Secrets
 Set-AzKeyVaultSecret -VaultName $CoreSecretsKeyVaultName -Name "VMAdminUsername" -SecretValue (SecureString $VMAdminUsernameP)
 Set-AzKeyVaultSecret -VaultName $CoreSecretsKeyVaultName -Name "VMAdminPassword" -SecretValue (SecureString $VMAdminPasswordP)
 Set-AzKeyVaultSecret -VaultName $CoreSecretsKeyVaultName -Name "SQLAdminUsername" -SecretValue (SecureString $SQLAdminUsernameP)
 Set-AzKeyVaultSecret -VaultName $CoreSecretsKeyVaultName -Name "SQLAdminPassword" -SecretValue (SecureString $SQLAdminPasswordP)
 
 #Deploy file
-New-AzResourceGroupDeployment -ResourceGroupName $RGName -TemplateFile main.bicep -TemplateParameterFile parameters.bicepparam -RandString (RandomiseString 6 "abcdefghijklmnopqrstuvwxyz1234567890") 
-#Set backup access policy
+# New-AzResourceGroupDeployment -ResourceGroupName $RGName -TemplateFile main.bicep -TemplateParameterFile parameters.bicepparam -RandString $RandomString
+
+New-AzResourceGroupDeploymentStack `
+  -Name "deploymentStack" `
+  -ResourceGroupName $RGName `
+  -TemplateFile "./main.bicep" `
+  -TemplateParameterFile "./parameters.bicepparam"  `
+  -ActionOnUnmanage "detachAll" `
+  -DenySettingsMode "none"
+
+#Set backup access policy and run backup
 Write-Output "Press Enter when All Resources are deployed"
 Pause
 $bms = Get-AzADServicePrincipal -DisplayName "Backup Management Service"
 Set-AzKeyVaultAccessPolicy -VaultName $CoreEncryptKeyVaultName -ObjectId $bms.id -PermissionsToSecrets Get,List,Backup -PermissionsToKeys Get,List,Backup
-#RunBackup
 .\backup.ps1
-#$AG = Get-AzApplicationGateway -ResourceGroupName $RGName
-#$AGPIPID = $AG[0].frontendIPConfigurations.Properties.publicIPAddress.id
-#$AGPIP = Get-AzPublicIpAddress -Id $AGPIPID
-#$AGName = $AG[0].Name
+
 Write-Output "Virtual Machine Admin Username : $VMAdminUsernameP"
 Write-Output "Virtual Machine Admin Password : $VMAdminPasswordP"
 Write-Output "SQL Admin Password : $SQLAdminUsernameP"
 Write-Output "SQL Admin Password : $SQLAdminPasswordP"
 Write-Output "CoreSecretsKeyVaultName : $CoreSecretsKeyVaultName"
-#Write-Output "AppGWPIP : $AGPIP.IpAddress"
-##Write-Output "AppGWDNS : $AGName.azurewebsites.net"
-
 
