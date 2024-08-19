@@ -38,13 +38,16 @@ param prodTag object
 param devTag object
 param coreServicesTag object
 
-var CoreSecVaultName = 'kv-secret-core-${RandString}'
+param CoreSecVaultName string
+param CoreSecVaultSubID string
+param CoreSecVaultRGName string
 var CoreEncryptKeyVaultName = 'kv-encrypt-core-${RandString}'
 
 
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' existing = {
   name: CoreSecVaultName
+  scope: resourceGroup(CoreSecVaultSubID, CoreSecVaultRGName)
 }
 resource defaultNSG 'Microsoft.Network/networkSecurityGroups@2023-05-01' ={
   name: DefaultNSGName
@@ -98,6 +101,7 @@ module devSpoke 'modules/spoke.bicep'={
   }
   dependsOn:[coreServices]
 }
+
 module prodSpoke 'modules/spoke.bicep'={
   name:'prodSpokeDeployment'
   params:{
@@ -119,6 +123,7 @@ module prodSpoke 'modules/spoke.bicep'={
   }
   dependsOn:[coreServices]
 }
+
 module hub 'modules/hub.bicep'={
   name:'hubDeployment'
   params:{
@@ -134,7 +139,8 @@ module hub 'modules/hub.bicep'={
     hubTag:hubTag
   }
   dependsOn:[coreServices
-    prodSpoke]
+    //prodSpoke
+    ]
 }
 /*
 module hubGateway 'modules/hubGateway.bicep'= {
@@ -175,7 +181,7 @@ module peerings 'modules/peerings.bicep'={
   }
   dependsOn:[
     devSpoke
-    prodSpoke
+    //prodSpoke
     hub
     core
   ]

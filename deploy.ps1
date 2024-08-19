@@ -18,7 +18,8 @@ $RGName = "rg-hubandspoke-prod-01"
 $RGLocation = "uksouth" 
 $RandomString = (RandomiseString 6 "abcdefghijklmnopqrstuvwxyz1234567890") 
 $CoreTags = @{"Area"="CoreServices"}
-$CoreSecretsKeyVaultName = "kv-secret-core-" + $RandomString
+$KeyVaultRGName = "rg-kv-master-dev-uks-02"
+$CoreSecretsKeyVaultName = "kv-master-dev-uks-01"
 $CoreEncryptKeyVaultName = "kv-encrypt-core-" + $RandomString
 $RecoveryServiceVaultName = 'rsv-core-'+$RGLocation+'-001'
 $vmName = 'vm-core-'+$RGLocation+'-001'
@@ -43,15 +44,8 @@ $VMAdminUsernameP = RandomiseString
 $VMAdminPasswordP = RandomiseString 16 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz&#$%?!1234567890"
 $SQLAdminUsernameP = RandomiseString 
 $SQLAdminPasswordP = RandomiseString 16 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz&#$%?!1234567890"
-Write-Output "Virtual Machine Admin Username : $VMAdminUsernameP"
-Write-Output "Virtual Machine Admin Password : $VMAdminPasswordP"
-Write-Output "SQL Admin Password : $SQLAdminUsernameP"
-Write-Output "SQL Admin Password : $SQLAdminPasswordP"
-Write-Output "CoreSecretsKeyVaultName : $CoreSecretsKeyVaultName"
-
 
 #Deploy Keyvault and Set Secrets
-New-AzKeyVault -ResourceGroupName $RGName -Location $RGLocation -Name $CoreSecretsKeyVaultName -EnabledForTemplateDeployment -Tag $CoreTags
 Set-AzKeyVaultSecret -VaultName $CoreSecretsKeyVaultName -Name "VMAdminUsername" -SecretValue (SecureString $VMAdminUsernameP)
 Set-AzKeyVaultSecret -VaultName $CoreSecretsKeyVaultName -Name "VMAdminPassword" -SecretValue (SecureString $VMAdminPasswordP)
 Set-AzKeyVaultSecret -VaultName $CoreSecretsKeyVaultName -Name "SQLAdminUsername" -SecretValue (SecureString $SQLAdminUsernameP)
@@ -59,7 +53,6 @@ Set-AzKeyVaultSecret -VaultName $CoreSecretsKeyVaultName -Name "SQLAdminPassword
 
 #Deploy file
 # New-AzResourceGroupDeployment -ResourceGroupName $RGName -TemplateFile main.bicep -TemplateParameterFile parameters.bicepparam -RandString $RandomString
-
 New-AzResourceGroupDeploymentStack `
   -Name "deploymentStack" `
   -ResourceGroupName $RGName `
@@ -67,13 +60,6 @@ New-AzResourceGroupDeploymentStack `
   -TemplateParameterFile "./parameters.bicepparam"  `
   -ActionOnUnmanage "detachAll" `
   -DenySettingsMode "none"
-
-#Set backup access policy and run backup
-Write-Output "Press Enter when All Resources are deployed"
-Pause
-$bms = Get-AzADServicePrincipal -DisplayName "Backup Management Service"
-Set-AzKeyVaultAccessPolicy -VaultName $CoreEncryptKeyVaultName -ObjectId $bms.id -PermissionsToSecrets Get,List,Backup -PermissionsToKeys Get,List,Backup
-.\backup.ps1
 
 Write-Output "Virtual Machine Admin Username : $VMAdminUsernameP"
 Write-Output "Virtual Machine Admin Password : $VMAdminPasswordP"

@@ -23,6 +23,9 @@ param prodAppServicePlanName = 'asp-prod-${location}-001-${RandString}'
 param prodAppServiceName = 'as-prod-${location}-001-${RandString}'
 param logAnalyticsWorkspaceName = 'log-core-${location}-001-${RandString}'
 param recoveryServiceVaultName = 'rsv-core-${location}-001'
+param CoreSecVaultName = 'kv-master-dev-uks-01'
+param CoreSecVaultSubID = 'e5cfa658-369f-4218-b58e-cece3814d3f1'
+param CoreSecVaultRGName = 'rg-kv-master-dev-uks-02'
 
 //Prefixes
 param prodVnetAddressPrefix = '10.31'
