@@ -7,11 +7,6 @@ function RandomiseString{
     $returnText = -Join($allowedText.tochararray() | Get-Random -Count $allowedLength | ForEach-Object {[char]$_})
     return $returnText
 }
-function SecureString{
-    param ([string]$unsecuredString = "a")
-    return (ConvertTo-SecureString $unsecuredString -AsPlainText -Force)
-    
-} 
 
 #Parameters Decleration
 $RGName = "rg-hubandspoke-prod-01" 

@@ -1,4 +1,4 @@
-#on: [push]
+on: [push]
 
 name: AzureARMDeploy
 
@@ -14,19 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      #- name: Check out the CARML repo
-      #  run: |
-      #      git config --global url.https://github.com/.insteadOf git://github.com/
-      #      git clone https://github.com/Azure/ResourceModules.git
-      #      ls
-      - name: Check out the CARML repo
-        uses: actions/checkout@v3
-        with:
-          repository: Azure/ResourceModules
-          path: ./ResourceModules
-      - name: Check if CARML repo worked
-        run: | 
-          ls
       - name: Run Bicep linter
         run: az bicep build --file ./main.bicep
       - name: Run Bicep Param linter
@@ -43,11 +30,6 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - uses: actions/checkout@v3
-      - name: Check out the CARML repo
-        uses: actions/checkout@v3
-        with:
-          repository: Azure/ResourceModules
-          path: ./ResourceModules
       - uses: azure/arm-deploy@v1
         name: Run preflight validation
         with:
@@ -56,8 +38,9 @@ jobs:
           template: ./main.bicep
           parameters: ./parameters.bicepparam
           deploymentMode: Validate
-  preview:
+  deploy:
     runs-on: ubuntu-latest
+    environment: testEnvironment
     needs: [lint, validate]
     steps:
       - name: 'Login to Azure'
@@ -67,43 +50,12 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - uses: actions/checkout@v3
-      - name: Check out the CARML repo
-        uses: actions/checkout@v3
-        with:
-          repository: Azure/ResourceModules
-          path: ./ResourceModules
-      - uses: azure/arm-deploy@v1
-        name: Run what-if
-        with:
-          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          resourceGroupName: ${{ secrets.AZURE_RG }}
-          template: ./main.bicep
-          parameters: ./parameters.bicepparam
-          failOnStdErr: false
-          additionalArguments: --what-if
-  deploy:
-    runs-on: ubuntu-latest
-    environment: testEnvironment
-    needs: preview
-    steps:
-      - name: 'Login to Azure'
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      - uses: actions/checkout@v3
-      - name: Check out the CARML repo
-        uses: actions/checkout@v3
-        with:
-          repository: Azure/ResourceModules
-          path: ./ResourceModules
-      - uses: azure/arm-deploy@v1
-        name: Deploy Bicep file
-        with:
-          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          resourceGroupName: ${{ secrets.AZURE_RG }}
-          template: ./main.bicep
-          parameters: ./parameters.bicepparam
-          failOnStdErr: false
-          
+      - name: Deploy Bicep template using deployment group
+        run: |
+        az stack group create \
+          --name "deploymentGroup"
+          --resource-group ${{ secrets.AZURE_RG }} \
+          --template-file main.bicep \
+          --parameters parameters.bicepparam \
+          --action-on-unmanage deleteAll \
+          --deny-settings-mode none
