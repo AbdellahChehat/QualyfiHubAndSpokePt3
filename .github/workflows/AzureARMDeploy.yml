@@ -53,7 +53,7 @@ jobs:
       - name: Deploy Bicep template using deployment group
         run: |
             az stack group create \
-              --name "deploymentGroup"
+              --name "deploymentGroup" \
               --resource-group ${{ secrets.AZURE_RG }} \
               --template-file main.bicep \
               --parameters parameters.bicepparam \
