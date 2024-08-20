@@ -40,7 +40,6 @@ jobs:
           deploymentMode: Validate
   deploy:
     runs-on: ubuntu-latest
-    environment: testEnvironment
     needs: [lint, validate]
     steps:
       - uses: actions/checkout@v3
