@@ -7,5 +7,5 @@ Set-AzResourceGroupDeploymentStack `
   -ResourceGroupName $RGName `
   -TemplateFile "./main.bicep" `
   -TemplateParameterFile "./parameters.bicepparam"  `
-  -ActionOnUnmanage "deleteResources" `
+  -ActionOnUnmanage "deleteAll" `
   -DenySettingsMode "none"

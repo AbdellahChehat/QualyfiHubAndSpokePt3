@@ -43,8 +43,6 @@ param CoreSecVaultSubID string
 param CoreSecVaultRGName string
 var CoreEncryptKeyVaultName = 'kv-encrypt-core-${RandString}'
 
-
-
 resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' existing = {
   name: CoreSecVaultName
   scope: resourceGroup(CoreSecVaultSubID, CoreSecVaultRGName)
@@ -62,29 +60,66 @@ resource routeTable 'Microsoft.Network/routeTables@2019-11-01' = {
 module coreServices 'modules/coreServices.bicep'={
   name:'coreServicesDeployment'
   params:{
-    coreVnetName :coreVnetName
-    devVnetName :devVnetName
-    hubVnetName :hubVnetName
-    prodVnetName :prodVnetName
     location:location
     logAnalyticsWorkspaceName:logAnalyticsWorkspaceName
     recoveryServiceVaultName:recoveryServiceVaultName
-    coreVnetAddress:coreVnetAddress
-    devVnetAddress: devVnetAddress
-    prodVnetAddress:prodVnetAddress
-    hubVnetAddress: hubVnetAddress
-    devTag:devTag
-    hubTag:hubTag
-    coreTag:coreTag
-    prodTag:prodTag
     coreServicesTag:coreServicesTag
   }
 }
+
+module hub 'modules/hub.bicep'={
+  name:'hubDeployment'
+  params:{
+    location:location
+    vnetAddressPrefix:hubVnetAddressPrefix
+    virtualNetworkName:hubVnetName
+    GatewaySubnetName:GatewaySubnetName
+    AppgwSubnetName:AppgwSubnetName
+    AzureFirewallSubnetName:AzureFirewallSubnetName
+    AzureBastionSubnetName:AzureBastionSubnetName
+    firewallName:firewallName
+    //prodAppServiceName:prodAppServiceName
+    logAnalyticsWorkspaceName:logAnalyticsWorkspaceName
+    hubTag:hubTag
+    coreServicesTag:coreServicesTag
+    appServicePrivateDnsZoneName :coreServices.outputs.appServicePrivateDnsZoneName
+    sqlPrivateDnsZoneName:coreServices.outputs.sqlPrivateDnsZoneName
+    storageAccountPrivateDnsZoneName:coreServices.outputs.storageAccountPrivateDnsZoneName
+  }
+  dependsOn:[coreServices]
+}
+module core 'modules/core.bicep'={
+  name:'coreDeployment'
+  params:{
+    location:location
+    vnetAddressPrefix:coreVnetAddressPrefix
+    virtualNetworkName:coreVnetName
+    adminUsername:keyVault.getSecret('VMAdminUsername')
+    adminPassword:keyVault.getSecret('VMAdminPassword')
+    defaultNSGName:defaultNSG.name
+    routeTableName:routeTable.name
+    logAnalyticsWorkspaceName:logAnalyticsWorkspaceName
+    recoveryServiceVaultName:recoveryServiceVaultName
+    CoreEncryptKeyVaultName:CoreEncryptKeyVaultName
+    RecoverySAName:'sacore${location}${RandString}'
+    coreTag:coreTag
+    hubVnetId:hub.outputs.vnetID
+    hubVnetName:hub.outputs.vnetName
+    coreServicesTag:coreServicesTag
+    appServicePrivateDnsZoneName :coreServices.outputs.appServicePrivateDnsZoneName
+    sqlPrivateDnsZoneName:coreServices.outputs.sqlPrivateDnsZoneName
+    storageAccountPrivateDnsZoneName:coreServices.outputs.storageAccountPrivateDnsZoneName
+    keyVaultPrivateDnsZoneId :coreServices.outputs.encryptKVPrivateDnsZoneId
+  }
+  dependsOn:[coreServices]
+}
+
 module devSpoke 'modules/spoke.bicep'={
   name:'devSpokeDeployment'
   params:{
     location:location
     devOrProd:'dev'
+    virtualNetworkName:devVnetName
     vnetAddressPrefix:devVnetAddressPrefix
     randString: RandString
     adminUsername:keyVault.getSecret('SQLAdminUsername')
@@ -98,8 +133,16 @@ module devSpoke 'modules/spoke.bicep'={
     appServicePlanName:devAppServicePlanName
     logAnalyticsWorkspaceName:logAnalyticsWorkspaceName
     tagSpoke:devTag
+    hubVnetId:hub.outputs.vnetID
+    hubVnetName:hub.outputs.vnetName
+    coreServicesTag:coreServicesTag
+    appServicePrivateDnsZoneId :coreServices.outputs.appServicePrivateDnsZoneId
+    sqlPrivateDnsZoneId :coreServices.outputs.sqlPrivateDnsZoneId
+    storageAccountPrivateDnsZoneId  :coreServices.outputs.storageAccountPrivateDnsZoneId
   }
-  dependsOn:[coreServices]
+  dependsOn:[core
+    prodSpoke
+  ]
 }
 
 module prodSpoke 'modules/spoke.bicep'={
@@ -107,6 +150,7 @@ module prodSpoke 'modules/spoke.bicep'={
   params:{
     location:location
     devOrProd:'prod'
+    virtualNetworkName:prodVnetName
     vnetAddressPrefix:prodVnetAddressPrefix
     randString: RandString
     adminUsername:keyVault.getSecret('SQLAdminUsername')
@@ -120,69 +164,13 @@ module prodSpoke 'modules/spoke.bicep'={
     appServicePlanName:prodAppServicePlanName
     logAnalyticsWorkspaceName:logAnalyticsWorkspaceName
     tagSpoke:prodTag
+    hubVnetId:hub.outputs.vnetID
+    hubVnetName:hub.outputs.vnetName
+    coreServicesTag:coreServicesTag
+    appServicePrivateDnsZoneId :coreServices.outputs.appServicePrivateDnsZoneId
+    sqlPrivateDnsZoneId :coreServices.outputs.sqlPrivateDnsZoneId
+    storageAccountPrivateDnsZoneId  :coreServices.outputs.storageAccountPrivateDnsZoneId
   }
-  dependsOn:[coreServices]
+  dependsOn:[core]
 }
 
-module hub 'modules/hub.bicep'={
-  name:'hubDeployment'
-  params:{
-    location:location
-    vnetAddressPrefix:hubVnetAddressPrefix
-    GatewaySubnetName:GatewaySubnetName
-    AppgwSubnetName:AppgwSubnetName
-    AzureFirewallSubnetName:AzureFirewallSubnetName
-    AzureBastionSubnetName:AzureBastionSubnetName
-    firewallName:firewallName
-    prodAppServiceName:prodAppServiceName
-    logAnalyticsWorkspaceName:logAnalyticsWorkspaceName
-    hubTag:hubTag
-  }
-  dependsOn:[coreServices
-    //prodSpoke
-    ]
-}
-/*
-module hubGateway 'modules/hubGateway.bicep'= {
-  name:'hubGatewayDeployment'
-  params:{
-    GatewaySubnetName: hub.outputs.HubGatewayName
-    location: location
-    virtualNetworkName: hub.outputs.HubVNName
-  }
-  dependsOn:[hub
-    peerings] // so deploys at end
-}
-*/
-module core 'modules/core.bicep'={
-  name:'coreDeployment'
-  params:{
-    location:location
-    vnetAddressPrefix:coreVnetAddressPrefix
-    adminUsername:keyVault.getSecret('VMAdminUsername')
-    adminPassword:keyVault.getSecret('VMAdminPassword')
-    defaultNSGName:defaultNSG.name
-    routeTableName:routeTable.name
-    logAnalyticsWorkspaceName:logAnalyticsWorkspaceName
-    recoveryServiceVaultName:recoveryServiceVaultName
-    keyVaultPrivateDnsZoneName:coreServices.outputs.encryptKVPrivateDnsZoneName
-    CoreEncryptKeyVaultName:CoreEncryptKeyVaultName
-    RecoverySAName:'sacore${location}${RandString}'
-    coreTag:coreTag
-  }
-  dependsOn:[coreServices]
-}
-module peerings 'modules/peerings.bicep'={
-  name:'peeringsDeployment'
-  params:{
-    location:location
-    firewallPrivateIP:hub.outputs.firewallPrivateIP
-    hubTag:hubTag
-  }
-  dependsOn:[
-    devSpoke
-    //prodSpoke
-    hub
-    core
-  ]
-}

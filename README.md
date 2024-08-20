@@ -44,7 +44,8 @@ Success Criteria:
 Extra Success Criteria:
 - [x] 1. Clone the exercise 1 code to new repo
 - [x] 2. Remark out the slow resources
-- [ ] 3. Create Github Action to deploy code using Deployment Stack with linting, preflight, what-if, approval
-- [ ] 4. Remove a spoke from the code – and see it deployed and spoke removed from environment
-- [ ] 5. Add the spoke back to the code – and see it deployed and spoke readded
-- [ ] 6. Sort out code (add variable files and sort out names)
+- [x] 3. Sort out code (add variable files and sort out names)
+- [ ] 4. Create Github Action to deploy code using Deployment Stack with linting, preflight, what-if, approval
+- [ ] 5. Remove a spoke from the code – and see it deployed and spoke removed from environment
+- [ ] 6. Add the spoke back to the code – and see it deployed and spoke readded
+- [ ] 7. Sort out code (add variable files and sort out names)

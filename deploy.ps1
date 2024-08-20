@@ -66,4 +66,3 @@ Write-Output "Virtual Machine Admin Password : $VMAdminPasswordP"
 Write-Output "SQL Admin Password : $SQLAdminUsernameP"
 Write-Output "SQL Admin Password : $SQLAdminPasswordP"
 Write-Output "CoreSecretsKeyVaultName : $CoreSecretsKeyVaultName"
-

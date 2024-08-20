@@ -10,12 +10,19 @@ param defaultNSGName string
 param routeTableName string
 param logAnalyticsWorkspaceName string
 param recoveryServiceVaultName string
-param keyVaultPrivateDnsZoneName string
 param CoreEncryptKeyVaultName string
 param RecoverySAName string
 param coreTag object
+param coreServicesTag object
+param hubVnetName string
+param hubVnetId string
+param appServicePrivateDnsZoneName string
+param sqlPrivateDnsZoneName string
+param storageAccountPrivateDnsZoneName string
+param keyVaultPrivateDnsZoneId string
 
-var virtualNetworkName = 'vnet-core-${location}-001'
+
+param virtualNetworkName string
 var vmName ='vm-core-${location}-001'
 var backupFabric = 'Azure'
 var v2VmType = 'Microsoft.Compute/virtualMachines'
@@ -63,6 +70,32 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
     ]
   }
 }
+resource hubToCorePeering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-05-01'={
+  name: '${hubVnetName}/hub-to-core-peering'
+  properties:{
+    allowForwardedTraffic:true
+    allowGatewayTransit:true
+    allowVirtualNetworkAccess:true
+    peeringState:'Connected'
+    remoteVirtualNetwork:{
+      id: virtualNetwork.id
+    }
+  }
+}
+resource coreToHubPeering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-05-01'={
+  name: 'core-to-hub-peering'
+  parent: virtualNetwork
+  properties:{
+    allowForwardedTraffic:true
+    allowGatewayTransit:true
+    allowVirtualNetworkAccess:true
+    peeringState:'Connected'
+    remoteVirtualNetwork:{
+      id: hubVnetId
+    }
+  }
+}
+
 resource VMSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: vmSubetName,parent: virtualNetwork}
 resource VMNetworkInterface 'Microsoft.Network/networkInterfaces@2020-11-01' = {
   name: vmNICName
@@ -332,32 +365,15 @@ resource DiskEncryption 'Microsoft.Compute/virtualMachines/extensions@2023-07-01
     }
   }
 }
-resource KVubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'KVSubnet',parent: virtualNetwork}
+resource kvSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'KVSubnet',parent: virtualNetwork}
 //DNS Settings
-resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
-  name: keyVaultPrivateDnsZoneName
-}
-resource privateEndpointDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = {
-  parent: keyVaultPrivateEndpoint
-  name: 'dnsgroupname'
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'config1'
-        properties: {
-          privateDnsZoneId: keyVaultPrivateDnsZone.id
-        }
-      }
-    ]
-  }
-}
 resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
   name:'private-endpoint-${encryptionKeyVault.name}'
   location:location
   tags:coreTag
   properties:{
     subnet:{
-      id:KVubnet.id
+      id:kvSubnet.id
     }
     privateLinkServiceConnections:[
       {
@@ -382,4 +398,56 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   }
 }
 
+//DNS Links
+//core
+resource CoreAppServiceLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  name: '${appServicePrivateDnsZoneName}/link-core'
+  location: 'global'
+  tags:coreServicesTag
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: virtualNetwork.id
+    }
+  }
+}
+resource CoreSQLLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  name: '${sqlPrivateDnsZoneName}/link-core'
+  location: 'global'
+  tags:coreServicesTag
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: virtualNetwork.id
+    }
+  }
+}
+resource CoreStorageAccountLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  name: '${storageAccountPrivateDnsZoneName}/link-core'
+  location: 'global'
+  tags:coreServicesTag
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: virtualNetwork.id
+    }
+  }
+}
+resource corePrivateEndpointDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = {
+  parent: keyVaultPrivateEndpoint
+  name: 'dnsgroupname'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'config1'
+        properties: {
+          privateDnsZoneId: keyVaultPrivateDnsZoneId
+        }
+      }
+    ]
+  }
+}
 
+output keyvaultSubnetID string =kvSubnet.id
+output keyVaultPrivateEndpointName string = keyVaultPrivateEndpoint.name
+output vnetID string =virtualNetwork.id

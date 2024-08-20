@@ -19,8 +19,14 @@ param appServicePlanName string
 param appServiceName string
 param logAnalyticsWorkspaceName string
 param tagSpoke object
+param hubVnetName string
+param hubVnetId string
+param coreServicesTag object
+param appServicePrivateDnsZoneId string
+param sqlPrivateDnsZoneId string
+param storageAccountPrivateDnsZoneId  string
 
-var virtualNetworkName = 'vnet-${devOrProd}-${location}-001'
+param virtualNetworkName string
 var appServicePlanSku = 'B1'
 var appServiceSubnetName ='AppSubnet'
 var SQLServerName = 'sql-${devOrProd}-${location}-001-${randString}'
@@ -67,6 +73,31 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
         }
       }
     ]
+  }
+}
+resource spokeToHubPeering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-05-01'={
+  name: '${devOrProd}-to-hub-peering'
+  parent: virtualNetwork
+  properties:{
+    allowForwardedTraffic:true
+    allowGatewayTransit:true
+    allowVirtualNetworkAccess:true
+    peeringState:'Connected'
+    remoteVirtualNetwork:{
+      id: hubVnetId
+    }
+  }
+}
+resource hubToSpokePeering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-05-01'={
+  name: '${hubVnetName}/hub-to-${devOrProd}-peering'
+  properties:{
+    allowForwardedTraffic:true
+    allowGatewayTransit:true
+    allowVirtualNetworkAccess:true
+    peeringState:'Connected'
+    remoteVirtualNetwork:{
+      id: virtualNetwork.id
+    }
   }
 }
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' existing = {
@@ -132,6 +163,9 @@ resource codeAppService 'Microsoft.Web/sites/sourcecontrols@2022-09-01' ={
     isManualIntegration:true
     branch:'master'
   }
+  dependsOn:[
+    appServicePrivateEndpoint
+  ]
 }
 resource AppServiceSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: appServiceSubnetName,parent: virtualNetwork
 }
@@ -261,10 +295,41 @@ resource storageAccountPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-
   }
 }
 //DNS Settings
-resource appServicePrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
-  name: appServicePrivateDnsZoneName
+resource spokeAppServiceLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  name: '${appServicePrivateDnsZoneName}/link-${devOrProd}'
+  location: 'global'
+  tags:coreServicesTag
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: virtualNetwork.id
+    }
+  }
 }
-resource privateEndpointDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = {
+resource spokeSQLLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  name: '${sqlPrivateDnsZoneName}/link-${devOrProd}'
+  location: 'global'
+  tags:coreServicesTag
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: virtualNetwork.id
+    }
+  }
+}
+resource spokeStorageAccountLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (devOrProd == 'prod') {
+  name: '${storageAccountPrivateDnsZoneName}/link-${devOrProd}'
+  location: 'global'
+  tags:coreServicesTag
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: virtualNetwork.id
+    }
+  }
+}
+
+resource appPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = {
   parent: appServicePrivateEndpoint
   name: 'dnsgroupname'
   properties: {
@@ -272,14 +337,11 @@ resource privateEndpointDnsZoneGroup 'Microsoft.Network/privateEndpoints/private
       {
         name: 'config1'
         properties: {
-          privateDnsZoneId: appServicePrivateDnsZone.id
+          privateDnsZoneId: appServicePrivateDnsZoneId
         }
       }
     ]
   }
-}
-resource sqlPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
-  name: sqlPrivateDnsZoneName
 }
 resource sqlPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = {
   parent: sqlServerPrivateEndpoint
@@ -289,16 +351,13 @@ resource sqlPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZo
       {
         name: 'config1'
         properties: {
-          privateDnsZoneId: sqlPrivateDnsZone.id
+          privateDnsZoneId: sqlPrivateDnsZoneId
         }
       }
     ]
   }
 }
-resource storageAccountPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
-  name: storageAccountPrivateDnsZoneName
-}
-resource storageAccountPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = if (devOrProd == 'prod') {
+resource storageAccountPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01'= if (devOrProd == 'prod') {
   parent: storageAccountPrivateEndpoint
   name: 'dnsgroupname'
   properties: {
@@ -306,12 +365,19 @@ resource storageAccountPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/p
       {
         name: 'config1'
         properties: {
-          privateDnsZoneId: storageAccountPrivateDnsZone.id
+          privateDnsZoneId: storageAccountPrivateDnsZoneId
         }
       }
     ]
   }
 }
+
+
+//output Endpoint names
+output appServicePrivateEndpointName string = appServicePrivateEndpoint.name
+output sqlServerPrivateEndpointName string = sqlServerPrivateEndpoint.name
+output storageAccountPrivateEndpointName string = storageAccountPrivateEndpoint.name
+output vnetID string =virtualNetwork.id
 
 //SQLAudit https://learn.microsoft.com/en-us/azure/templates/microsoft.sql/servers/auditingsettings?pivots=deployment-language-bicep
 //https://learn.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-database-engine?view=sql-server-ver16

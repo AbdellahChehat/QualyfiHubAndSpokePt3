@@ -7,24 +7,28 @@ param AppgwSubnetName string
 param AzureFirewallSubnetName string
 param AzureBastionSubnetName string
 param firewallName string
-param prodAppServiceName string
+//param prodAppServiceName string
 param logAnalyticsWorkspaceName string
 param hubTag object
+param coreServicesTag object
+param appServicePrivateDnsZoneName string
+param sqlPrivateDnsZoneName string
+param storageAccountPrivateDnsZoneName string
 
 
-var virtualNetworkName = 'vnet-hub-${location}-001'
+param virtualNetworkName string
 var GatewaySubnetAddressPrefix ='1'
 var AppgwSubnetAddressPrefix ='2'
 var AzureFirewallSubnetAddressPrefix ='3'
 var AzureBastionSubnetAddressPrefix ='4'
-var appgw_id = resourceId('Microsoft.Network/applicationGateways','appGateway-hub-${location}-001')
-var bastionPIPName ='pip-bastion-hub-${location}-001'
-var bastionName ='bastion-hub-${location}-001'
+//var appgw_id = resourceId('Microsoft.Network/applicationGateways','appGateway-hub-${location}-001')
+//var bastionPIPName ='pip-bastion-hub-${location}-001'
+//var bastionName ='bastion-hub-${location}-001'
 var firewallPIPName = 'pip-firewall-hub-${location}-001'
 var firewallPolicyName ='firewallPolicy-hub-${location}-001' 
 var firewallRulesName ='firewallRules-hub-${location}-001'
-var appGatewayPIPName = 'pip-appGateway-hub-${location}-001'
-var appGatewayName = 'appGateway-hub-${location}-001'
+//var appGatewayPIPName = 'pip-appGateway-hub-${location}-001'
+//var appGatewayName = 'appGateway-hub-${location}-001'
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   name: virtualNetworkName
@@ -64,43 +68,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
     ]
   }
 }
-
-//Bastion Code
 /*
-resource BastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: AzureBastionSubnetName,parent: virtualNetwork}
-
-resource bastionPIP 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
-  name: bastionPIPName
-  location: location
-  tags:hubTag
-  sku: {
-    name: 'Standard'
-  }
-  properties: {
-    publicIPAllocationMethod: 'Static'
-  }
-}
-resource bastion 'Microsoft.Network/bastionHosts@2023-05-01' = {
-  name: bastionName
-  location:location
-  tags:hubTag
-  properties: {
-    ipConfigurations: [
-      {
-        name: 'ipconfig'
-        properties: {
-          subnet: {
-            id: BastionSubnet.id
-          }
-          publicIPAddress: {
-            id: bastionPIP.id
-          }
-        }
-      }
-    ]
-  }
-}
-*/
 //Firewall Code
 resource FirewallSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: AzureFirewallSubnetName,parent: virtualNetwork}
 
@@ -187,120 +155,44 @@ resource firewallDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-
     workspaceId: logAnalyticsWorkspace.id
   }
 }
+  */
 
-//AppGateway
-resource AppGatewaySubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: AppgwSubnetName,parent: virtualNetwork}
-
-resource appGatewayPIP 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
-  name: appGatewayPIPName
-  location: location
-  tags:hubTag
-  sku: {
-    name: 'Standard'
-  }
+//DNS settings
+resource HubAppServiceLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  name: '${appServicePrivateDnsZoneName}/link-hub'
+  location: 'global'
+  tags:coreServicesTag
   properties: {
-    publicIPAllocationMethod: 'Static'
+    registrationEnabled: false
+    virtualNetwork: {
+      id: virtualNetwork.id
+    }
   }
 }
-
-resource appGateway 'Microsoft.Network/applicationGateways@2023-05-01' = {
-  name: appGatewayName
-  location: location
-  tags:hubTag
-  properties:{
-    backendAddressPools:[
-      {
-        name:'backendAddressPool'
-        properties:{
-          backendAddresses:[{
-            fqdn:'${prodAppServiceName}.azurewebsites.net'
-          }]
-        }
-      }
-    ]
-    backendHttpSettingsCollection:[
-      {
-        name:'backendHttpPort80'
-        properties:{
-          port:80
-          protocol:'Http'
-          pickHostNameFromBackendAddress:true
-        }
-      }
-    ]
-    frontendIPConfigurations:[
-      {
-        name:'appGatewayFrontendConfig'
-        properties:{
-          privateIPAllocationMethod: 'Dynamic'
-          publicIPAddress:{
-            id:appGatewayPIP.id
-          }
-        }
-      }
-    ]
-    frontendPorts:[
-      {
-        name:'frontendHttpPort80'
-        properties:{
-          port:80
-        }
-      }
-    ]
-    gatewayIPConfigurations:[
-      {
-        name:'appGatewayIPConfig'
-        properties:{
-          subnet:{
-            id:AppGatewaySubnet.id
-          }
-        }
-      }
-    ]
-    httpListeners:[
-      {
-          name:'appGWHttpListener'
-          properties:{
-            frontendIPConfiguration:{
-              id:'${appgw_id}/frontendIPConfigurations/appGatewayFrontendConfig'
-            }
-            frontendPort:{
-              id:'${appgw_id}/frontendPorts/frontendHttpPort80'
-            }
-            protocol:'Http'
-          }
-      }
-    ]
-    requestRoutingRules:[
-      {
-        name:'appGWRoutingRule'
-        properties:{
-          ruleType:'Basic'
-          priority:110
-          httpListener:{
-            id:'${appgw_id}/httpListeners/appGWHttpListener'
-          }
-          backendAddressPool:{
-            id:'${appgw_id}/backendAddressPools/backendAddressPool'
-          }
-          backendHttpSettings:{
-            id:'${appgw_id}/backendHttpSettingsCollection/backendHttpPort80'
-          }
-
-        }
-      }
-    ]
-    sku:{
-      name:'Standard_v2'
-      tier:'Standard_v2'
+resource HubSQLLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  name: '${sqlPrivateDnsZoneName}/link-hub'
+  location: 'global'
+  tags:coreServicesTag
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: virtualNetwork.id
     }
-    autoscaleConfiguration:{
-      minCapacity:1
-      maxCapacity:5
+  }
+}
+resource HubStorageAccountLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  name: '${storageAccountPrivateDnsZoneName}/link-hub'
+  location: 'global'
+  tags:coreServicesTag
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: virtualNetwork.id
     }
   }
 }
 
-//Hub Gateway deployed seperately.
 output HubGatewayName string = GatewaySubnetName
 output HubVNName string = virtualNetwork.name
+output vnetID string =virtualNetwork.id
+output vnetName string =virtualNetwork.name

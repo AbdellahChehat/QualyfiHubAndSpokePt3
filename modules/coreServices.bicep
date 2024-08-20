@@ -1,19 +1,8 @@
-param coreVnetName string
-param devVnetName string
-param hubVnetName string
-param prodVnetName string
 param logAnalyticsWorkspaceName string
 param recoveryServiceVaultName string
 param location string
-param coreVnetAddress string
-param devVnetAddress string
-param prodVnetAddress string
-param hubVnetAddress string
+ 
 
-param hubTag object
-param coreTag object
-param prodTag object
-param devTag object
 param coreServicesTag object
 
 //RSV
@@ -40,55 +29,7 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10
     }
   }
 }
-//Get VNets
-resource coreVnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
-  name: coreVnetName
-  location: location
-  tags:coreTag
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        coreVnetAddress//'10.20.0.0/16'
-      ]
-    }
-  }
-}
-resource devVnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
-  name: devVnetName
-  location: location
-  tags:devTag
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        devVnetAddress//'10.30.0.0/16'
-      ]
-    }
-  }
-}
-resource hubVnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
-  name: hubVnetName
-  location: location
-  tags:hubTag
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        hubVnetAddress//'10.10.0.0/16'
-      ]
-    }
-  }
-}
-resource prodVnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
-  name: prodVnetName
-  location: location
-  tags:prodTag
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        prodVnetAddress//'10.31.0.0/16'
-      ]
-    }
-  }
-}
+
 //DNS Zones
 resource appServicePrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: 'privatelink.azurewebsites.net'
@@ -116,142 +57,10 @@ output appServicePrivateDnsZoneName string = appServicePrivateDnsZone.name
 output sqlPrivateDnsZoneName string = sqlPrivateDnsZone.name
 output storageAccountPrivateDnsZoneName string = storageAccountPrivateDnsZone.name
 output encryptKVPrivateDnsZoneName string = encryptKVPrivateDnsZone.name
-//DNS Links
-//core
-resource CoreAppServiceLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: appServicePrivateDnsZone
-  name: 'link-core'
-  location: 'global'
-  tags:coreServicesTag
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: coreVnet.id
-    }
-  }
-}
-resource CoreSQLLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: sqlPrivateDnsZone
-  name: 'link-core'
-  location: 'global'
-  tags:coreServicesTag
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: coreVnet.id
-    }
-  }
-}
-resource CoreStorageAccountLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: storageAccountPrivateDnsZone
-  name: 'link-core'
-  location: 'global'
-  tags:coreServicesTag
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: coreVnet.id
-    }
-  }
-}
-//dev
-resource DevAppServiceLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: appServicePrivateDnsZone
-  name: 'link-dev'
-  location: 'global'
-  tags:coreServicesTag
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: devVnet.id
-    }
-  }
-}
-resource DevSQLLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: sqlPrivateDnsZone
-  name: 'link-dev'
-  location: 'global'
-  tags:coreServicesTag
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: devVnet.id
-    }
-  }
-}
-//hub
-resource HubAppServiceLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: appServicePrivateDnsZone
-  name: 'link-hub'
-  location: 'global'
-  tags:coreServicesTag
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: hubVnet.id
-    }
-  }
-}
-resource HubSQLLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: sqlPrivateDnsZone
-  name: 'link-hub'
-  location: 'global'
-  tags:coreServicesTag
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: hubVnet.id
-    }
-  }
-}
-resource HubStorageAccountLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: storageAccountPrivateDnsZone
-  name: 'link-hub'
-  location: 'global'
-  tags:coreServicesTag
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: hubVnet.id
-    }
-  }
-}
-//prod
-resource ProdAppServiceLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: appServicePrivateDnsZone
-  name: 'link-prod'
-  location: 'global'
-  tags:coreServicesTag
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: prodVnet.id
-    }
-  }
-}
-resource ProdSQLLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: sqlPrivateDnsZone
-  name: 'link-prod'
-  location: 'global'
-  tags:coreServicesTag
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: prodVnet.id
-    }
-  }
-}
-resource ProdStorageAccountLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: storageAccountPrivateDnsZone
-  name: 'link-prod'
-  location: 'global'
-  tags:coreServicesTag
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: prodVnet.id
-    }
-  }
-}
+//output DNS Zone ids
+output appServicePrivateDnsZoneId string = appServicePrivateDnsZone.id
+output sqlPrivateDnsZoneId string = sqlPrivateDnsZone.id
+output storageAccountPrivateDnsZoneId string = storageAccountPrivateDnsZone.id
+output encryptKVPrivateDnsZoneId string = encryptKVPrivateDnsZone.id
 
 //Zone Groups created in Spoke.bicep
