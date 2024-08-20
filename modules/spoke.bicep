@@ -40,6 +40,34 @@ var appServicePrivateEndpointName = 'private-endpoint-${appService.name}'
 var sqlServerPrivateEndpointName = 'private-endpoint-${sqlServer.name}'
 var storageAccountPrivateEndpointName ='private-endpoint-${storageAccount.name}'
 
+var appServiceSubnetObject ={
+        name: appServiceSubnetName
+        properties: {
+          addressPrefix: '${vnetAddressPrefix}.1.0/24'
+          networkSecurityGroup:{  id: defaultNSG.id }
+          routeTable:{id:routeTable.id}
+        }
+}
+var SQLServerSubnetObject ={
+        name: SQLServerSubnetName
+        properties: {
+          addressPrefix: '${vnetAddressPrefix}.2.0/24'
+          networkSecurityGroup:{  id: defaultNSG.id }
+          routeTable:{id:routeTable.id}
+        }
+}
+var SASubnetObject ={
+        name: SASubnetName
+        properties: {
+          addressPrefix: '${vnetAddressPrefix}.3.0/24'
+          networkSecurityGroup: { id: defaultNSG.id }
+          routeTable: { id: routeTable.id }
+        }
+}
+var prodSubnet = [appServiceSubnetObject,SQLServerSubnetObject,SASubnetObject]
+var devSubnet = [appServiceSubnetObject,SQLServerSubnetObject]
+
+
 resource routeTable 'Microsoft.Network/routeTables@2019-11-01' existing = {name: routeTableName}
 
 resource defaultNSG 'Microsoft.Network/networkSecurityGroups@2023-05-01' existing ={
@@ -55,24 +83,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
         '${vnetAddressPrefix}.0.0/16'
       ]
     }
-    subnets: [
-      {
-        name: appServiceSubnetName
-        properties: {
-          addressPrefix: '${vnetAddressPrefix}.1.0/24'
-          networkSecurityGroup:{  id: defaultNSG.id }
-          routeTable:{id:routeTable.id}
-        }
-      }
-      {
-        name: SQLServerSubnetName
-        properties: {
-          addressPrefix: '${vnetAddressPrefix}.2.0/24'
-          networkSecurityGroup:{  id: defaultNSG.id }
-          routeTable:{id:routeTable.id}
-        }
-      }
-    ]
+    subnets: devOrProd == 'prod' ? prodSubnet : devSubnet
   }
 }
 resource spokeToHubPeering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-05-01'={
@@ -164,7 +175,7 @@ resource codeAppService 'Microsoft.Web/sites/sourcecontrols@2022-09-01' ={
     branch:'master'
   }
   dependsOn:[
-    appServicePrivateEndpoint
+    appPrivateDnsZoneGroup
   ]
 }
 resource AppServiceSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: appServiceSubnetName,parent: virtualNetwork
