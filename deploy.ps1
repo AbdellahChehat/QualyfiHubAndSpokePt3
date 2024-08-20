@@ -9,7 +9,7 @@ function RandomiseString{
 }
 
 #Parameters Decleration
-$RGName = "rg-hubandspoke-prod-01" 
+$RGName = "rg-jm-hubandspoke-dev-uks-01" 
 $RGLocation = "uksouth" 
 $RandomString = (RandomiseString 6 "abcdefghijklmnopqrstuvwxyz1234567890") 
 $CoreTags = @{"Area"="CoreServices"}
