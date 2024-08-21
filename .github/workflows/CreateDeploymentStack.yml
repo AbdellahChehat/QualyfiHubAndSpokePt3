@@ -35,7 +35,7 @@ jobs:
         name: Run preflight validation
         with:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          resourceGroupName: ${{ secrets.AZURE_RG }}
+          resourceGroupName: "rg-jm-hubandspoke-dev-uks-01"
           template: ./main.bicep
           parameters: ./parameters.bicepparam
           deploymentMode: Validate
