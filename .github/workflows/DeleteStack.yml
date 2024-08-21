@@ -1,7 +1,7 @@
 on:
   workflow_dispatch:
 
-name: AzureARMDeploy
+name: DeleteStack
 
 permissions:
   id-token: write
