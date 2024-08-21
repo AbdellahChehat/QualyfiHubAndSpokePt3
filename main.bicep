@@ -113,36 +113,36 @@ module core 'modules/core.bicep'={
   }
   dependsOn:[coreServices]
 }
-// module devSpoke 'modules/spoke.bicep'={
-//   name:'devSpokeDeployment'
-//   params:{
-//     location:location
-//     devOrProd:'dev'
-//     virtualNetworkName:devVnetName
-//     vnetAddressPrefix:devVnetAddressPrefix
-//     randString: RandString
-//     adminUsername:keyVault.getSecret('SQLAdminUsername')
-//     adminPassword:keyVault.getSecret('SQLAdminPassword')
-//     defaultNSGName:defaultNSG.name
-//     routeTableName:routeTable.name
-//     appServicePrivateDnsZoneName:coreServices.outputs.appServicePrivateDnsZoneName
-//     sqlPrivateDnsZoneName:coreServices.outputs.sqlPrivateDnsZoneName
-//     storageAccountPrivateDnsZoneName:coreServices.outputs.storageAccountPrivateDnsZoneName
-//     appServiceName:devAppServiceName
-//     appServicePlanName:devAppServicePlanName
-//     logAnalyticsWorkspaceName:logAnalyticsWorkspaceName
-//     tagSpoke:devTag
-//     hubVnetId:hub.outputs.vnetID
-//     hubVnetName:hub.outputs.vnetName
-//     coreServicesTag:coreServicesTag
-//     appServicePrivateDnsZoneId :coreServices.outputs.appServicePrivateDnsZoneId
-//     sqlPrivateDnsZoneId :coreServices.outputs.sqlPrivateDnsZoneId
-//     storageAccountPrivateDnsZoneId  :coreServices.outputs.storageAccountPrivateDnsZoneId
-//   }
-//   dependsOn:[core
-//     prodSpoke
-//   ]
-// }
+module devSpoke 'modules/spoke.bicep'={
+   name:'devSpokeDeployment'
+   params:{
+     location:location
+     devOrProd:'dev'
+     virtualNetworkName:devVnetName
+     vnetAddressPrefix:devVnetAddressPrefix
+     randString: RandString
+     adminUsername:keyVault.getSecret('SQLAdminUsername')
+     adminPassword:keyVault.getSecret('SQLAdminPassword')
+     defaultNSGName:defaultNSG.name
+     routeTableName:routeTable.name
+     appServicePrivateDnsZoneName:coreServices.outputs.appServicePrivateDnsZoneName
+     sqlPrivateDnsZoneName:coreServices.outputs.sqlPrivateDnsZoneName
+     storageAccountPrivateDnsZoneName:coreServices.outputs.storageAccountPrivateDnsZoneName
+     appServiceName:devAppServiceName
+     appServicePlanName:devAppServicePlanName
+     logAnalyticsWorkspaceName:logAnalyticsWorkspaceName
+     tagSpoke:devTag
+     hubVnetId:hub.outputs.vnetID
+     hubVnetName:hub.outputs.vnetName
+     coreServicesTag:coreServicesTag
+     appServicePrivateDnsZoneId :coreServices.outputs.appServicePrivateDnsZoneId
+     sqlPrivateDnsZoneId :coreServices.outputs.sqlPrivateDnsZoneId
+     storageAccountPrivateDnsZoneId  :coreServices.outputs.storageAccountPrivateDnsZoneId
+   }
+   dependsOn:[core
+     prodSpoke
+   ]
+} 
 module prodSpoke 'modules/spoke.bicep'={
   name:'prodSpokeDeployment'
   params:{
