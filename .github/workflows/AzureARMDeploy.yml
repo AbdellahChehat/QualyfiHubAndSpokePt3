@@ -53,7 +53,7 @@ jobs:
       - name: Deploy Bicep template using deployment group
         run: |
             az stack group create \
-              --name "deploymentGroup" \
+              --name "deploymentStack" \
               --action-on-unmanage deleteAll \
               --deny-settings-mode none \
               --resource-group "rg-jm-hubandspoke-dev-uks-01" \
