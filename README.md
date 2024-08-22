@@ -45,7 +45,13 @@ Extra Success Criteria:
 - [x] 1. Clone the exercise 1 code to new repo
 - [x] 2. Remark out the slow resources
 - [x] 3. Sort out code (add variable files and sort out names)
-- [ ] 4. Create Github Action to deploy code using Deployment Stack with linting, preflight, what-if, approval
-- [ ] 5. Remove a spoke from the code – and see it deployed and spoke removed from environment
-- [ ] 6. Add the spoke back to the code – and see it deployed and spoke readded
+- [x] 4. Create Github Action to deploy code using Deployment Stack with linting, preflight, what-if, approval
+- [x] 5. Remove a spoke from the code – and see it deployed and spoke removed from environment
+- [x] 6. Add the spoke back to the code – and see it deployed and spoke readded
 - [ ] 7. Sort out code (add variable files and sort out names)
+- [ ] 8. Add Mega Linter and PSRule
+- [ ] 9. Create easy variable file
+- [ ] 10. Add enviroments
+- [ ] 11. Switch spokes to apps
+- [ ] 12. Add and remove spokes automatically
+- [ ] 13. Make it slick
