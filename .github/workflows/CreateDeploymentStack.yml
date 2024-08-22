@@ -55,7 +55,7 @@ jobs:
         run: |
             az stack group create \
               --name "deploymentStack" \
-              --action-on-unmanage detachAll \
+              --action-on-unmanage deleteResources \
               --deny-settings-mode none \
               --resource-group "rg-jm-hubandspoke-dev-uks-01" \
               --template-file main.bicep \
