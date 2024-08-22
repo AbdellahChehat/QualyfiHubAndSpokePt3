@@ -113,7 +113,6 @@ module core 'modules/core.bicep'={
   }
   dependsOn:[coreServices]
 }
-/*
 module devSpoke 'modules/spoke.bicep'={
    name:'devSpokeDeployment'
    params:{
@@ -144,7 +143,6 @@ module devSpoke 'modules/spoke.bicep'={
      prodSpoke
    ]
 } 
-*/
 module prodSpoke 'modules/spoke.bicep'={
   name:'prodSpokeDeployment'
   params:{
