@@ -86,6 +86,7 @@ module core 'modules/core.bicep'={
     keyVaultPrivateDnsZoneId :coreServices.outputs.encryptKVPrivateDnsZoneId
   }
 }
+/*
 module devSpoke 'modules/spoke.bicep'={
    name:'devSpokeDeployment'
    params:{
@@ -112,7 +113,8 @@ module devSpoke 'modules/spoke.bicep'={
    dependsOn:[
      prodSpoke
    ]
-} 
+}
+    */
 module prodSpoke 'modules/spoke.bicep'={
   name:'prodSpokeDeployment'
   params:{
