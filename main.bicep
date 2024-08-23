@@ -40,7 +40,7 @@ module hub 'modules/hub.bicep'={
     location:location
     vnetAddressPrefix:bicepConfigList.hub.vnetAddressPrefix
     virtualNetworkNamePrefix:bicepConfigList.hub.vnetName
-    logAnalyticsWorkspaceId:coreServices.outputs.loganalyticsWorkspaceId
+    //logAnalyticsWorkspaceId:coreServices.outputs.loganalyticsWorkspaceId
     hubTag:bicepConfigList.hub.tags
     coreServicesTag:bicepConfigList.coreServices.tags
     appServicePrivateDnsZoneName :coreServices.outputs.appServicePrivateDnsZoneName

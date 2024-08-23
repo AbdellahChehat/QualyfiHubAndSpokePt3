@@ -2,7 +2,7 @@
 
 param location string
 param vnetAddressPrefix string
-param logAnalyticsWorkspaceId string
+//param logAnalyticsWorkspaceId string
 param hubTag object
 param coreServicesTag object
 param appServicePrivateDnsZoneName string
