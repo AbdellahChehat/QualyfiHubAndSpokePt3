@@ -7,8 +7,9 @@ param adminUsername string
 @secure()
 param adminPassword string
 param defaultNSGName string
-param routeTableName string
-param logAnalyticsWorkspaceName string
+param routeTableId string
+param logAnalyticsWorkspaceId string
+param recoveryServiceVaultId string
 param recoveryServiceVaultName string
 param CoreEncryptKeyVaultName string
 param RecoverySAName string
@@ -22,7 +23,7 @@ param storageAccountPrivateDnsZoneName string
 param keyVaultPrivateDnsZoneId string
 
 
-param virtualNetworkPrefix string
+param virtualNetworkNamePrefix string
 var vmName ='vm-core-${location}-001'
 var backupFabric = 'Azure'
 var v2VmType = 'Microsoft.Compute/virtualMachines'
@@ -39,9 +40,8 @@ var dataCollectionRuleName = 'MSVMI-vmDataCollectionRule'
 resource defaultNSG 'Microsoft.Network/networkSecurityGroups@2023-05-01' existing ={
   name: defaultNSGName
 }
-resource routeTable 'Microsoft.Network/routeTables@2019-11-01' existing = {name: routeTableName}
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
-  name: 'vnet-${virtualNetworkPrefix}-${location}-001'
+  name: 'vnet-${virtualNetworkNamePrefix}-${location}-001'
   location: location
   tags:coreTag
   properties: {
@@ -56,7 +56,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
         properties: {
           addressPrefix: '${vnetAddressPrefix}.1.0/24'
           networkSecurityGroup:{  id: defaultNSG.id }
-          routeTable:{id:routeTable.id}
+          routeTable:{id:routeTableId}
         }
       }
       {
@@ -64,7 +64,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
         properties: {
           addressPrefix: '${vnetAddressPrefix}.2.0/24'
           networkSecurityGroup:{  id: defaultNSG.id }
-          routeTable:{id:routeTable.id}
+          routeTable:{id:routeTableId}
         }
       }
     ]
@@ -116,6 +116,7 @@ resource VMNetworkInterface 'Microsoft.Network/networkInterfaces@2020-11-01' = {
     ]
   }
 }
+/*
 resource windowsVM 'Microsoft.Compute/virtualMachines@2020-12-01' = {
   name: vmName
   location: location
@@ -163,9 +164,6 @@ resource windowsVM 'Microsoft.Compute/virtualMachines@2020-12-01' = {
       
     }
   }
-}
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' existing = {
-  name:logAnalyticsWorkspaceName
 }
 resource vmDAExtension 'Microsoft.Compute/virtualMachines/extensions@2023-07-01' = {
   parent:windowsVM
@@ -268,7 +266,7 @@ resource dataCollectionRule 'Microsoft.Insights/dataCollectionRules@2022-06-01' 
     destinations:{
       logAnalytics:[{
         name:'VMInsightsPerf-Logs-Dest'
-        workspaceResourceId:logAnalyticsWorkspace.id
+        workspaceResourceId:logAnalyticsWorkspaceId
       }]
     }
     dataFlows: [
@@ -297,31 +295,33 @@ resource dataCollectionRuleAssociation 'Microsoft.Insights/dataCollectionRuleAss
 resource solution 'Microsoft.OperationsManagement/solutions@2015-11-01-preview' = {
   location: location
   tags:coreTag
-  name: 'VMInsights(${split(logAnalyticsWorkspace.id, '/')[8]})'
+  name: 'VMInsights(${split(logAnalyticsWorkspaceId, '/')[8]})'
   properties: {
-    workspaceResourceId: logAnalyticsWorkspace.id
+    workspaceResourceId: logAnalyticsWorkspaceId
   }
   plan: {
-    name: 'VMInsights(${split(logAnalyticsWorkspace.id, '/')[8]})'
+    name: 'VMInsights(${split(logAnalyticsWorkspaceId, '/')[8]})'
     product: 'OMSGallery/VMInsights'
     promotionCode: ''
     publisher: 'Microsoft'
   }
 }
 
-resource recoveryServiceVaults 'Microsoft.RecoveryServices/vaults@2023-06-01'existing = {
-  name:recoveryServiceVaultName
-}
+//resource recoveryServiceVaults 'Microsoft.RecoveryServices/vaults@2023-06-01'existing = {
+//  name:recoveryServiceVaultName
+//}
+
 //https://github.com/Azure/azure-quickstart-templates/blob/master/quickstarts/microsoft.recoveryservices/recovery-services-backup-vms/main.bicep#L20
 resource windowsVMBackup 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems@2023-04-01' ={
   name:'${recoveryServiceVaultName}/${backupFabric}/${v2VmContainer}${resourceGroup().name};${vmName}/${v2Vm}${resourceGroup().name};${vmName}'
   tags:coreTag
   properties: {
     protectedItemType: v2VmType
-    policyId: '${recoveryServiceVaults.id}/backupPolicies/DefaultPolicy'
+    policyId: '${recoveryServiceVaultId}/backupPolicies/DefaultPolicy'
     sourceResourceId: windowsVM.id
   }
 }
+*/
 //Key Vault
 resource encryptionKeyVault 'Microsoft.KeyVault/vaults@2023-02-01'={
   name:CoreEncryptKeyVaultName
@@ -344,7 +344,7 @@ resource encryptionKeyVault 'Microsoft.KeyVault/vaults@2023-02-01'={
     tenantId:subscription().tenantId
   }
 }
-
+/*
 resource DiskEncryption 'Microsoft.Compute/virtualMachines/extensions@2023-07-01' = {
   parent: windowsVM
   tags:coreTag
@@ -365,6 +365,7 @@ resource DiskEncryption 'Microsoft.Compute/virtualMachines/extensions@2023-07-01
     }
   }
 }
+*/
 resource kvSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'KVSubnet',parent: virtualNetwork}
 //DNS Settings
 resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {

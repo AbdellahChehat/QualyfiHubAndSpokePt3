@@ -1,28 +1,15 @@
 param RandString string
-
 //All parameters defined in PARAMETERS file.
 param location string
-
-param coreVnetName string
-param hubVnetName string
-
-param prodVnetAddressPrefix string
-param devVnetAddressPrefix string
-param coreVnetAddressPrefix string
-param hubVnetAddressPrefix string
-
-//tags
-param hubTag object
-param coreTag object
-param prodTag object
-param devTag object
-param coreServicesTag object
-
 param CoreSecVaultName string
 param CoreSecVaultSubID string
 param CoreSecVaultRGName string
+
 var CoreEncryptKeyVaultName = 'kv-encrypt-core-${RandString}'
 var DefaultNSGName ='defaultNSG'
+//Loads in the configuration for modules.
+var bicepConfigList = loadJsonContent('./bicepConfig.json')
+var spokeList = [for item in items(bicepConfigList.spokeList):item.key ] //Checks which spokes need to be deployed via the list
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' existing = {
   name: CoreSecVaultName
@@ -31,19 +18,19 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' existing = {
 resource defaultNSG 'Microsoft.Network/networkSecurityGroups@2023-05-01' ={
   name: DefaultNSGName
   location:location
-  tags:coreServicesTag
+  tags:bicepConfigList.coreServices.tags
 }
 resource routeTable 'Microsoft.Network/routeTables@2019-11-01' = {
   name: 'routetable-${location}-001'
   location: location
-  tags:hubTag
+  tags:bicepConfigList.hub.tags
 }
 module coreServices 'modules/coreServices.bicep'={
   name:'coreServicesDeployment'
   params:{
     location:location
     RandString:RandString
-    coreServicesTag:coreServicesTag
+    coreServicesTag:bicepConfigList.coreServices.tags
   }
 }
 
@@ -51,12 +38,11 @@ module hub 'modules/hub.bicep'={
   name:'hubDeployment'
   params:{
     location:location
-    vnetAddressPrefix:hubVnetAddressPrefix
-    virtualNetworkPrefix:hubVnetName
-    //prodAppServiceName:prodAppServiceName
-    logAnalyticsWorkspaceName:coreServices.outputs.loganalyticsWorkspaceName
-    hubTag:hubTag
-    coreServicesTag:coreServicesTag
+    vnetAddressPrefix:bicepConfigList.hub.vnetAddressPrefix
+    virtualNetworkNamePrefix:bicepConfigList.hub.vnetName
+    logAnalyticsWorkspaceId:coreServices.outputs.loganalyticsWorkspaceId
+    hubTag:bicepConfigList.hub.tags
+    coreServicesTag:bicepConfigList.coreServices.tags
     appServicePrivateDnsZoneName :coreServices.outputs.appServicePrivateDnsZoneName
     sqlPrivateDnsZoneName:coreServices.outputs.sqlPrivateDnsZoneName
     storageAccountPrivateDnsZoneName:coreServices.outputs.storageAccountPrivateDnsZoneName
@@ -66,76 +52,59 @@ module core 'modules/core.bicep'={
   name:'coreDeployment'
   params:{
     location:location
-    vnetAddressPrefix:coreVnetAddressPrefix
-    virtualNetworkPrefix:coreVnetName
+    vnetAddressPrefix:bicepConfigList.core.vnetAddressPrefix
+    virtualNetworkNamePrefix:bicepConfigList.core.vnetName
     adminUsername:keyVault.getSecret('VMAdminUsername')
     adminPassword:keyVault.getSecret('VMAdminPassword')
-    defaultNSGName:defaultNSG.name
-    routeTableName:routeTable.name
-    logAnalyticsWorkspaceName:coreServices.outputs.loganalyticsWorkspaceName
-    recoveryServiceVaultName:coreServices.outputs.recoveryServiceVaultName
     CoreEncryptKeyVaultName:CoreEncryptKeyVaultName
-    RecoverySAName:'sacore${location}${RandString}'
-    coreTag:coreTag
+    coreTag:bicepConfigList.core.tags
+    coreServicesTag:bicepConfigList.coreServices.tags
+    defaultNSGName:defaultNSG.name
+    routeTableId:routeTable.id
     hubVnetId:hub.outputs.vnetID
     hubVnetName:hub.outputs.vnetName
-    coreServicesTag:coreServicesTag
+    logAnalyticsWorkspaceId:coreServices.outputs.loganalyticsWorkspaceId
+    recoveryServiceVaultName:coreServices.outputs.recoveryServiceVaultName
+    recoveryServiceVaultId:coreServices.outputs.recoveryServiceVaultId
+    RecoverySAName:'sacore${location}${RandString}'
     appServicePrivateDnsZoneName :coreServices.outputs.appServicePrivateDnsZoneName
     sqlPrivateDnsZoneName:coreServices.outputs.sqlPrivateDnsZoneName
     storageAccountPrivateDnsZoneName:coreServices.outputs.storageAccountPrivateDnsZoneName
     keyVaultPrivateDnsZoneId :coreServices.outputs.encryptKVPrivateDnsZoneId
   }
 }
-module devSpoke 'modules/spoke.bicep'={
-   name:'devSpokeDeployment'
+module spokes 'modules/spoke.bicep'= [for spoke in spokeList : {
+   name:'${spoke}Deployment'
    params:{
      location:location
-     spokeType:'dev'
-     vnetAddressPrefix:devVnetAddressPrefix
+     spokeType:bicepConfigList.spokes[spoke].vnetName
+     vnetAddressPrefix:bicepConfigList.spokes[spoke].vnetAddressPrefix
      randString: RandString
      adminUsername:keyVault.getSecret('SQLAdminUsername')
      adminPassword:keyVault.getSecret('SQLAdminPassword')
-     defaultNSGName:defaultNSG.name
-     routeTableName:routeTable.name
-     appServicePrivateDnsZoneName:coreServices.outputs.appServicePrivateDnsZoneName
-     sqlPrivateDnsZoneName:coreServices.outputs.sqlPrivateDnsZoneName
-     storageAccountPrivateDnsZoneName:coreServices.outputs.storageAccountPrivateDnsZoneName
-     logAnalyticsWorkspaceName:coreServices.outputs.loganalyticsWorkspaceName
-     tagSpoke:devTag
+     tagSpoke:bicepConfigList.spokes[spoke].tags
+
+     appServicePlanSkuName:bicepConfigList.spokes[spoke].appServicePlanSkuName
+     linuxFxVersion:bicepConfigList.spokes[spoke].linuxFxVersion
+     storageAccountSkuName:bicepConfigList.spokes[spoke].storageAccountSkuName
+     sqlDatabaseSku:bicepConfigList.spokes[spoke].sqlDatabaseSku
+     repoURL:bicepConfigList.spokes[spoke].repoURL
+     branch:bicepConfigList.spokes[spoke].branch
+
      hubVnetId:hub.outputs.vnetID
      hubVnetName:hub.outputs.vnetName
-     coreServicesTag:coreServicesTag
+     coreServicesTag:bicepConfigList.coreServices.tags
+     defaultNSGId:defaultNSG.id
+     routeTableId:routeTable.id
+     logAnalyticsWorkspaceId:coreServices.outputs.loganalyticsWorkspaceId
      appServicePrivateDnsZoneId :coreServices.outputs.appServicePrivateDnsZoneId
      sqlPrivateDnsZoneId :coreServices.outputs.sqlPrivateDnsZoneId
      storageAccountPrivateDnsZoneId  :coreServices.outputs.storageAccountPrivateDnsZoneId
+     appServicePrivateDnsZoneName:coreServices.outputs.appServicePrivateDnsZoneName
+     sqlPrivateDnsZoneName:coreServices.outputs.sqlPrivateDnsZoneName
+     storageAccountPrivateDnsZoneName:coreServices.outputs.storageAccountPrivateDnsZoneName
    }
-   dependsOn:[
-     prodSpoke
-   ]
+   dependsOn:[core]
 }
-module prodSpoke 'modules/spoke.bicep'={
-  name:'prodSpokeDeployment'
-  params:{
-    location:location
-    spokeType:'prod'
-    vnetAddressPrefix:prodVnetAddressPrefix
-    randString: RandString
-    adminUsername:keyVault.getSecret('SQLAdminUsername')
-    adminPassword:keyVault.getSecret('SQLAdminPassword')
-    defaultNSGName:defaultNSG.name
-    routeTableName:routeTable.name
-    appServicePrivateDnsZoneName:coreServices.outputs.appServicePrivateDnsZoneName
-    sqlPrivateDnsZoneName:coreServices.outputs.sqlPrivateDnsZoneName
-    storageAccountPrivateDnsZoneName:coreServices.outputs.storageAccountPrivateDnsZoneName
-    logAnalyticsWorkspaceName:coreServices.outputs.loganalyticsWorkspaceName
-    tagSpoke:prodTag
-    hubVnetId:hub.outputs.vnetID
-    hubVnetName:hub.outputs.vnetName
-    coreServicesTag:coreServicesTag
-    appServicePrivateDnsZoneId :coreServices.outputs.appServicePrivateDnsZoneId
-    sqlPrivateDnsZoneId :coreServices.outputs.sqlPrivateDnsZoneId
-    storageAccountPrivateDnsZoneId  :coreServices.outputs.storageAccountPrivateDnsZoneId
-  }
-  dependsOn:[core]
-}
+]
 

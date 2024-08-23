@@ -65,4 +65,6 @@ output encryptKVPrivateDnsZoneId string = encryptKVPrivateDnsZone.id
 //names
 output loganalyticsWorkspaceName string = logAnalyticsWorkspace.name
 output recoveryServiceVaultName string = recoveryServiceVaults.name
+output loganalyticsWorkspaceId string = logAnalyticsWorkspace.id
+output recoveryServiceVaultId string = recoveryServiceVaults.id
 //Zone Groups created in Spoke.bicep

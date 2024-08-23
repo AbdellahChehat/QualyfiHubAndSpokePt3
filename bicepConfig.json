@@ -1,0 +1,89 @@
+{
+    "spokeList":{
+        "app1":"app1",
+        "app2":"app2",
+        "app3":"app3"
+
+    },
+    "coreServices":{
+        "tags":{
+            "Environment":"CoreServices",
+            "Dept":"CoreServices",
+            "Owner":"CoreServicesOwner"
+        }
+    },
+    "hub":{
+        "vnetAddressPrefix" : "10.10",
+        "vnetName":"hub",
+        "tags":{
+            "Environment":"Hub",
+            "Dept":"Hub",
+            "Owner":"HubOwner"
+        }
+    },
+    "core":{
+        "vnetAddressPrefix" : "10.20",
+        "vnetName":"core",
+        "tags":{
+            "Environment":"Core",
+            "Dept":"Core",
+            "Owner":"CoreOwner"
+        }
+    },
+    "spokes":{
+        "app1":{
+            "vnetAddressPrefix" : "10.30",
+            "vnetName":"app1",
+            "location":"uksouth",
+            "appServicePlanSkuName":"B1",
+            "linuxFxVersion":"DOTNETCORE|7.0",
+            "sqlDatabaseSku":{
+                "name":"Basic"
+            },
+            "storageAccountSkuName":"Standard_LRS",
+            "repoURL":"https://github.com/Azure-Samples/dotnetcore-docs-hello-world",
+            "branch":"master",
+            "tags":{
+                "Environment":"App1",
+                "Dept":"App1",
+                "Owner":"App1Owner"
+            }
+        },
+        "app2":{
+            "vnetAddressPrefix" : "10.31",
+            "vnetName":"app2",
+            "location":"uksouth",
+            "appServicePlanSkuName":"B1",
+            "linuxFxVersion":"DOTNETCORE|7.0",
+            "sqlDatabaseSku":{
+                "name":"Basic"
+            },
+            "storageAccountSkuName":"Standard_LRS",
+            "repoURL":"https://github.com/Azure-Samples/dotnetcore-docs-hello-world",
+            "branch":"master",
+            "tags":{
+                "Environment":"App2",
+                "Dept":"App2",
+                "Owner":"App2Owner"
+            }
+        },
+        "app3":{
+            "vnetAddressPrefix" : "10.32",
+            "vnetName":"app2",
+            "location":"uksouth",
+            "appServicePlanSkuName":"B1",
+            "linuxFxVersion":"DOTNETCORE|7.0",
+            "sqlDatabaseSku":{
+                "name":"Basic"
+            },
+            "storageAccountSkuName":"Standard_LRS",
+            "repoURL":"https://github.com/Azure-Samples/dotnetcore-docs-hello-world",
+            "branch":"master",
+            "tags":{
+                "Environment":"App3",
+                "Dept":"App3",
+                "Owner":"App3Owner"
+            }
+        }
+    }
+}

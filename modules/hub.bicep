@@ -2,14 +2,13 @@
 
 param location string
 param vnetAddressPrefix string
-//param prodAppServiceName string
-param logAnalyticsWorkspaceName string
+param logAnalyticsWorkspaceId string
 param hubTag object
 param coreServicesTag object
 param appServicePrivateDnsZoneName string
 param sqlPrivateDnsZoneName string
 param storageAccountPrivateDnsZoneName string
-param virtualNetworkPrefix string
+param virtualNetworkNamePrefix string
 
 var GatewaySubnetAddressPrefix ='1'
 var AppgwSubnetAddressPrefix ='2'
@@ -29,7 +28,7 @@ var bastionSubnetName ='AzureBastionSubnet'
 //var firewallRulesName ='firewallRules-hub-${location}-001'
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
-  name: 'vnet-${virtualNetworkPrefix}-${location}-001'
+  name: 'vnet-${virtualNetworkNamePrefix}-${location}-001'
   location: location
   tags:hubTag
   properties: {
@@ -130,9 +129,7 @@ resource firewallRuleCollection 'Microsoft.Network/firewallPolicies/ruleCollecti
   }
 }
 output firewallPrivateIP string = '${vnetAddressPrefix}.${AzureFirewallSubnetAddressPrefix}.4' //firewall.properties.hubIPAddresses.privateIPAddress
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' existing = {
-  name:logAnalyticsWorkspaceName
-}
+
 resource firewallDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   name: 'firewallDiagnosticSettings'
   scope: firewall
@@ -150,7 +147,7 @@ resource firewallDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-
         enabled: true
       }
     ]
-    workspaceId: logAnalyticsWorkspace.id
+    workspaceId: logAnalyticsWorkspaceId
   }
 }
   */
