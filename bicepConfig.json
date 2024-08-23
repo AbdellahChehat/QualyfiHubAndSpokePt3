@@ -69,7 +69,7 @@
         },
         "app3":{
             "vnetAddressPrefix" : "10.32",
-            "vnetName":"app2",
+            "vnetName":"app3",
             "location":"uksouth",
             "appServicePlanSkuName":"B1",
             "linuxFxVersion":"DOTNETCORE|7.0",

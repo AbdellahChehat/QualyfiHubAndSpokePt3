@@ -53,10 +53,9 @@ jobs:
       - uses: actions/checkout@v3
       - name: Deploy Bicep template using deployment group
         run: |
-            az stack group create \
-              --name "deploymentStack" \
-              --action-on-unmanage deleteResources \
-              --deny-settings-mode none \
+            az deployment group create \
+              --name mainDeployment \
               --resource-group "rg-jm-hubandspoke-dev-uks-01" \
               --template-file main.bicep \
-              --parameters parameters.bicepparam 
+              --parameters parameters.bicepparam \
+              --mode Complete

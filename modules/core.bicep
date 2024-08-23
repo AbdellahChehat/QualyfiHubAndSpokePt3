@@ -2,15 +2,15 @@
 
 param location string
 param vnetAddressPrefix string
-@secure()
-param adminUsername string
-@secure()
-param adminPassword string
-param defaultNSGName string
+//@secure()
+//param adminUsername string
+//@secure()
+//param adminPassword string
+param defaultNSGId string
 param routeTableId string
-param logAnalyticsWorkspaceId string
-param recoveryServiceVaultId string
-param recoveryServiceVaultName string
+//param logAnalyticsWorkspaceId string
+//param recoveryServiceVaultId string
+//param recoveryServiceVaultName string
 param CoreEncryptKeyVaultName string
 param RecoverySAName string
 param coreTag object
@@ -21,25 +21,22 @@ param appServicePrivateDnsZoneName string
 param sqlPrivateDnsZoneName string
 param storageAccountPrivateDnsZoneName string
 param keyVaultPrivateDnsZoneId string
-
-
 param virtualNetworkNamePrefix string
+/*
 var vmName ='vm-core-${location}-001'
 var backupFabric = 'Azure'
 var v2VmType = 'Microsoft.Compute/virtualMachines'
 var v2VmContainer = 'iaasvmcontainer;iaasvmcontainerv2;'
 var v2Vm = 'vm;iaasvmcontainerv2;'
-var vmSubetName = 'VMSubnet'
-var kvSubetName = 'KVSubnet'
 var vmSize = 'Standard_D2S_v3'
-var vmNICName = 'nic-core-${location}-001'
-var vmNICIP = '10.20.1.20'
 var vmComputerName = 'coreComputer'
 var dataCollectionRuleName = 'MSVMI-vmDataCollectionRule'
+*/
+var vmSubetName = 'VMSubnet'
+var kvSubetName = 'KVSubnet'
+var vmNICName = 'nic-core-${location}-001'
+var vmNICIP = '10.20.1.20'
 
-resource defaultNSG 'Microsoft.Network/networkSecurityGroups@2023-05-01' existing ={
-  name: defaultNSGName
-}
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   name: 'vnet-${virtualNetworkNamePrefix}-${location}-001'
   location: location
@@ -55,7 +52,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
         name: vmSubetName
         properties: {
           addressPrefix: '${vnetAddressPrefix}.1.0/24'
-          networkSecurityGroup:{  id: defaultNSG.id }
+          networkSecurityGroup:{  id: defaultNSGId }
           routeTable:{id:routeTableId}
         }
       }
@@ -63,7 +60,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
         name: kvSubetName
         properties: {
           addressPrefix: '${vnetAddressPrefix}.2.0/24'
-          networkSecurityGroup:{  id: defaultNSG.id }
+          networkSecurityGroup:{  id: defaultNSGId }
           routeTable:{id:routeTableId}
         }
       }

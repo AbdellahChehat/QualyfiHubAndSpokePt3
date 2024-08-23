@@ -54,18 +54,18 @@ module core 'modules/core.bicep'={
     location:location
     vnetAddressPrefix:bicepConfigList.core.vnetAddressPrefix
     virtualNetworkNamePrefix:bicepConfigList.core.vnetName
-    adminUsername:keyVault.getSecret('VMAdminUsername')
-    adminPassword:keyVault.getSecret('VMAdminPassword')
+    //adminUsername:keyVault.getSecret('VMAdminUsername')
+    //adminPassword:keyVault.getSecret('VMAdminPassword')
     CoreEncryptKeyVaultName:CoreEncryptKeyVaultName
     coreTag:bicepConfigList.core.tags
     coreServicesTag:bicepConfigList.coreServices.tags
-    defaultNSGName:defaultNSG.name
+    defaultNSGId:defaultNSG.id
     routeTableId:routeTable.id
     hubVnetId:hub.outputs.vnetID
     hubVnetName:hub.outputs.vnetName
-    logAnalyticsWorkspaceId:coreServices.outputs.loganalyticsWorkspaceId
-    recoveryServiceVaultName:coreServices.outputs.recoveryServiceVaultName
-    recoveryServiceVaultId:coreServices.outputs.recoveryServiceVaultId
+    //logAnalyticsWorkspaceId:coreServices.outputs.loganalyticsWorkspaceId
+    //recoveryServiceVaultName:coreServices.outputs.recoveryServiceVaultName
+    //recoveryServiceVaultId:coreServices.outputs.recoveryServiceVaultId
     RecoverySAName:'sacore${location}${RandString}'
     appServicePrivateDnsZoneName :coreServices.outputs.appServicePrivateDnsZoneName
     sqlPrivateDnsZoneName:coreServices.outputs.sqlPrivateDnsZoneName
