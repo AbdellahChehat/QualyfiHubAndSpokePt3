@@ -39,7 +39,7 @@ jobs:
           template: ./main.bicep
           parameters: ./parameters.bicepparam
           deploymentMode: Validate
-    preview:
+  preview:
     runs-on: ubuntu-latest
     needs: [lint, validate]
     steps:
