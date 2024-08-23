@@ -22,7 +22,7 @@ param storageAccountPrivateDnsZoneName string
 param keyVaultPrivateDnsZoneId string
 
 
-param virtualNetworkName string
+param virtualNetworkPrefix string
 var vmName ='vm-core-${location}-001'
 var backupFabric = 'Azure'
 var v2VmType = 'Microsoft.Compute/virtualMachines'
@@ -41,7 +41,7 @@ resource defaultNSG 'Microsoft.Network/networkSecurityGroups@2023-05-01' existin
 }
 resource routeTable 'Microsoft.Network/routeTables@2019-11-01' existing = {name: routeTableName}
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
-  name: virtualNetworkName
+  name: 'vnet-${virtualNetworkPrefix}-${location}-001'
   location: location
   tags:coreTag
   properties: {

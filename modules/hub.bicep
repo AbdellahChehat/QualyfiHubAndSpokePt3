@@ -2,11 +2,6 @@
 
 param location string
 param vnetAddressPrefix string
-param GatewaySubnetName string
-param AppgwSubnetName string
-param AzureFirewallSubnetName string
-param AzureBastionSubnetName string
-param firewallName string
 //param prodAppServiceName string
 param logAnalyticsWorkspaceName string
 param hubTag object
@@ -14,24 +9,27 @@ param coreServicesTag object
 param appServicePrivateDnsZoneName string
 param sqlPrivateDnsZoneName string
 param storageAccountPrivateDnsZoneName string
+param virtualNetworkPrefix string
 
-
-param virtualNetworkName string
 var GatewaySubnetAddressPrefix ='1'
 var AppgwSubnetAddressPrefix ='2'
 var AzureFirewallSubnetAddressPrefix ='3'
 var AzureBastionSubnetAddressPrefix ='4'
-//var appgw_id = resourceId('Microsoft.Network/applicationGateways','appGateway-hub-${location}-001')
+
+var firewallSubnetName = 'AzureFirewallSubnet'
+var gatewaySubnetName ='GatewaySubnet'
+var appGWSubnetName ='AppgwSubnet'
+var bastionSubnetName ='AzureBastionSubnet'
+//var appGatewayPIPName = 'pip-appGateway-hub-${location}-001'
+//var appGatewayName = 'appGateway-hub-${location}-001'//var appgw_id = resourceId('Microsoft.Network/applicationGateways','appGateway-hub-${location}-001')
 //var bastionPIPName ='pip-bastion-hub-${location}-001'
 //var bastionName ='bastion-hub-${location}-001'
-var firewallPIPName = 'pip-firewall-hub-${location}-001'
-var firewallPolicyName ='firewallPolicy-hub-${location}-001' 
-var firewallRulesName ='firewallRules-hub-${location}-001'
-//var appGatewayPIPName = 'pip-appGateway-hub-${location}-001'
-//var appGatewayName = 'appGateway-hub-${location}-001'
+//var firewallPIPName = 'pip-firewall-hub-${location}-001'
+//var firewallPolicyName ='firewallPolicy-hub-${location}-001' 
+//var firewallRulesName ='firewallRules-hub-${location}-001'
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
-  name: virtualNetworkName
+  name: 'vnet-${virtualNetworkPrefix}-${location}-001'
   location: location
   tags:hubTag
   properties: {
@@ -42,25 +40,25 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
     }
     subnets: [
       {
-        name: GatewaySubnetName
+        name: gatewaySubnetName
         properties: {
           addressPrefix: '${vnetAddressPrefix}.${GatewaySubnetAddressPrefix}.0/24'
         }
       }
       {
-        name: AppgwSubnetName
+        name: appGWSubnetName
         properties: {
           addressPrefix: '${vnetAddressPrefix}.${AppgwSubnetAddressPrefix}.0/24'
         }
       }
       {
-        name: AzureFirewallSubnetName
+        name: firewallSubnetName
         properties: {
           addressPrefix: '${vnetAddressPrefix}.${AzureFirewallSubnetAddressPrefix}.0/24'
         }
       }
       {
-        name: AzureBastionSubnetName
+        name: bastionSubnetName
         properties: {
           addressPrefix: '${vnetAddressPrefix}.${AzureBastionSubnetAddressPrefix}.0/24'
         }
@@ -192,7 +190,7 @@ resource HubStorageAccountLink 'Microsoft.Network/privateDnsZones/virtualNetwork
   }
 }
 
-output HubGatewayName string = GatewaySubnetName
+output HubGatewayName string = gatewaySubnetName
 output HubVNName string = virtualNetwork.name
 output vnetID string =virtualNetwork.id
 output vnetName string =virtualNetwork.name

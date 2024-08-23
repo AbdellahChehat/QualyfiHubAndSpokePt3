@@ -2,7 +2,7 @@
   'dev'
   'prod'
 ])
-param devOrProd string = 'dev'
+param spokeType string = 'dev'
 param location string
 param vnetAddressPrefix string
 param randString string
@@ -15,8 +15,6 @@ param routeTableName string
 param appServicePrivateDnsZoneName string 
 param sqlPrivateDnsZoneName string 
 param storageAccountPrivateDnsZoneName string
-param appServicePlanName string
-param appServiceName string
 param logAnalyticsWorkspaceName string
 param tagSpoke object
 param hubVnetName string
@@ -25,20 +23,20 @@ param coreServicesTag object
 param appServicePrivateDnsZoneId string
 param sqlPrivateDnsZoneId string
 param storageAccountPrivateDnsZoneId  string
-
-param virtualNetworkName string
 var appServicePlanSku = 'B1'
 var appServiceSubnetName ='AppSubnet'
-var SQLServerName = 'sql-${devOrProd}-${location}-001-${randString}'
+var SQLServerName = 'sql-${spokeType}-${location}-001-${randString}'
 var SQLServerSku = 'Basic'
-var SQLDatabaseName = 'sqldb-${devOrProd}-${location}-001-${randString}'
+var SQLDatabaseName = 'sqldb-${spokeType}-${location}-001-${randString}'
 var SQLServerSubnetName ='SqlSubnet'
-var storageAccountName = 'st${devOrProd}001${randString}'
+var storageAccountName = 'st${spokeType}001${randString}'
 var SASubnetName ='StSubnet'
 var appServiceRepoURL = 'https://github.com/Azure-Samples/dotnetcore-docs-hello-world'
 var appServicePrivateEndpointName = 'private-endpoint-${appService.name}'
 var sqlServerPrivateEndpointName = 'private-endpoint-${sqlServer.name}'
 var storageAccountPrivateEndpointName ='private-endpoint-${storageAccount.name}'
+var appServicePlanName = 'asp-${spokeType}-${location}-001-${randString}'
+var appServiceName = 'as-${spokeType}-${location}-001-${randString}'
 
 var appServiceSubnetObject ={
         name: appServiceSubnetName
@@ -74,7 +72,7 @@ resource defaultNSG 'Microsoft.Network/networkSecurityGroups@2023-05-01' existin
   name: defaultNSGName
 }
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
-  name: virtualNetworkName
+  name: 'vnet-${spokeType}-${location}-001'
   location: location
   tags:tagSpoke
   properties: {
@@ -83,11 +81,11 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
         '${vnetAddressPrefix}.0.0/16'
       ]
     }
-    subnets: devOrProd == 'prod' ? prodSubnet : devSubnet
+    subnets: spokeType == 'prod' ? prodSubnet : devSubnet
   }
 }
 resource spokeToHubPeering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-05-01'={
-  name: '${devOrProd}-to-hub-peering'
+  name: '${spokeType}-to-hub-peering'
   parent: virtualNetwork
   properties:{
     allowForwardedTraffic:true
@@ -100,7 +98,7 @@ resource spokeToHubPeering 'Microsoft.Network/virtualNetworks/virtualNetworkPeer
   }
 }
 resource hubToSpokePeering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-05-01'={
-  name: '${hubVnetName}/hub-to-${devOrProd}-peering'
+  name: '${hubVnetName}/hub-to-${spokeType}-peering'
   properties:{
     allowForwardedTraffic:true
     allowGatewayTransit:true
@@ -114,7 +112,7 @@ resource hubToSpokePeering 'Microsoft.Network/virtualNetworks/virtualNetworkPeer
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' existing = {
   name:logAnalyticsWorkspaceName
 }
-resource storageAccountSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-03-01' = if (devOrProd == 'prod') {
+resource storageAccountSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-03-01' = if (spokeType == 'prod') {
   parent: virtualNetwork
   name: SASubnetName
   properties: {
@@ -200,8 +198,8 @@ resource appServicePrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-0
   }]
   }
 }
-resource appServiceDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (devOrProd == 'prod') {
-  name: '${devOrProd}-${location}-aSDiagnosticSettings'
+resource appServiceDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (spokeType == 'prod') {
+  name: '${spokeType}-${location}-aSDiagnosticSettings'
   scope: appService
   properties: {
     logs: [
@@ -224,7 +222,7 @@ resource appServiceDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@202
   ]
 }
 resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name:'${devOrProd}-${location}-aSInsights'
+  name:'${spokeType}-${location}-aSInsights'
   location:location
   tags:tagSpoke
   kind:'web'
@@ -276,7 +274,7 @@ resource sqlServerPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01
   }
 }
 //StorageAccount
-resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = if (devOrProd == 'prod') {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = if (spokeType == 'prod') {
   name: storageAccountName
   kind: 'StorageV2'
   tags:tagSpoke
@@ -285,7 +283,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = if (dev
     name:'Standard_LRS'
   }
 }
-resource storageAccountPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = if (devOrProd == 'prod') {
+resource storageAccountPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = if (spokeType == 'prod') {
   name:storageAccountPrivateEndpointName
   location:location
   tags:tagSpoke
@@ -307,7 +305,7 @@ resource storageAccountPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-
 }
 //DNS Settings
 resource spokeAppServiceLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  name: '${appServicePrivateDnsZoneName}/link-${devOrProd}'
+  name: '${appServicePrivateDnsZoneName}/link-${spokeType}'
   location: 'global'
   tags:coreServicesTag
   properties: {
@@ -318,7 +316,7 @@ resource spokeAppServiceLink 'Microsoft.Network/privateDnsZones/virtualNetworkLi
   }
 }
 resource spokeSQLLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  name: '${sqlPrivateDnsZoneName}/link-${devOrProd}'
+  name: '${sqlPrivateDnsZoneName}/link-${spokeType}'
   location: 'global'
   tags:coreServicesTag
   properties: {
@@ -328,8 +326,8 @@ resource spokeSQLLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@202
     }
   }
 }
-resource spokeStorageAccountLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (devOrProd == 'prod') {
-  name: '${storageAccountPrivateDnsZoneName}/link-${devOrProd}'
+resource spokeStorageAccountLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (spokeType == 'prod') {
+  name: '${storageAccountPrivateDnsZoneName}/link-${spokeType}'
   location: 'global'
   tags:coreServicesTag
   properties: {
@@ -368,7 +366,7 @@ resource sqlPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZo
     ]
   }
 }
-resource storageAccountPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01'= if (devOrProd == 'prod') {
+resource storageAccountPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01'= if (spokeType == 'prod') {
   parent: storageAccountPrivateEndpoint
   name: 'dnsgroupname'
   properties: {

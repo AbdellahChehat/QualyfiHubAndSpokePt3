@@ -1,9 +1,9 @@
-param logAnalyticsWorkspaceName string
-param recoveryServiceVaultName string
 param location string
- 
-
 param coreServicesTag object
+param RandString string
+
+var logAnalyticsWorkspaceName = 'log-core-${location}-001-${RandString}'
+var recoveryServiceVaultName = 'rsv-core-${location}-001'
 
 //RSV
 resource recoveryServiceVaults 'Microsoft.RecoveryServices/vaults@2023-06-01'={
@@ -62,5 +62,7 @@ output appServicePrivateDnsZoneId string = appServicePrivateDnsZone.id
 output sqlPrivateDnsZoneId string = sqlPrivateDnsZone.id
 output storageAccountPrivateDnsZoneId string = storageAccountPrivateDnsZone.id
 output encryptKVPrivateDnsZoneId string = encryptKVPrivateDnsZone.id
-
+//names
+output loganalyticsWorkspaceName string = logAnalyticsWorkspace.name
+output recoveryServiceVaultName string = recoveryServiceVaults.name
 //Zone Groups created in Spoke.bicep
